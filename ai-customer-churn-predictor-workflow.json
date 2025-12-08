@@ -1,0 +1,249 @@
+{
+  "id": "ehVwdzoMgdJVtoEB",
+  "meta": {
+    "instanceId": "da4ab0dfab9545594afdbbd8e2347c29274c36efe4d80cdc8b66410174bf5bec",
+    "templateCredsSetupCompleted": true
+  },
+  "name": "Featured - AI Customer Churn Predictor",
+  "tags": [],
+  "nodes": [
+    {
+      "id": "6096815e-0444-4570-a149-660dfcab20d9",
+      "name": "Main Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        140,
+        -340
+      ],
+      "webhookId": "ai-customer-churn-predictor-trigger-id",
+      "parameters": {
+        "path": "ai-customer-churn-predictor-trigger",
+        "options": {},
+        "httpMethod": "POST"
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "18cd5f54-3a41-434d-ad92-01715cbcf633",
+      "name": "AI Analyzer",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        380,
+        -340
+      ],
+      "parameters": {
+        "model": "o3",
+        "prompt": "Act as a world-class customer success leader. Your main objective is to remove all possibility of client churn & maximize client success & renewals.\n\nAnalyze and process this client data: {{ JSON.stringify($json) }}. Provide intelligent insights, predictions, and actionable recommendations on immediate, short-term and long-term timelines.",
+        "options": {
+          "maxTokens": 800,
+          "temperature": 0.3
+        },
+        "requestOptions": {}
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "RL2T9qzlXCBXalW4",
+          "name": "OpenAi account"
+        }
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "78afe9fc-e0b3-46e3-b268-5b0eb848be57",
+      "name": "Parse AI Insights",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        660,
+        -340
+      ],
+      "parameters": {
+        "options": {}
+      },
+      "typeVersion": 3
+    },
+    {
+      "id": "bfc34c46-aa75-445a-b950-fde45b3ad797",
+      "name": "Store Insights",
+      "type": "n8n-nodes-base.airtable",
+      "position": [
+        900,
+        -340
+      ],
+      "parameters": {
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "columns": {
+          "value": {},
+          "schema": [],
+          "mappingMode": "defineBelow",
+          "matchingColumns": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {},
+        "operation": "create"
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "wS53npuGfFpkwkir",
+          "name": "Airtable All Bases"
+        }
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "508b5808-a8ee-46eb-92bb-f19c31c26108",
+      "name": "Notify Team",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1160,
+        -340
+      ],
+      "webhookId": "3652697f-3fda-4dfb-ab19-f9accc9c46ee",
+      "parameters": {
+        "text": "New AI insights from AI Customer Churn Predictor:\n\n{{ JSON.stringify($(\"Parse AI Insights\").item.json.aiInsights, null, 2) }}",
+        "options": {},
+        "subject": "AI Churn Warning: {{ $(\"Parse AI Insights\").item.json.aiInsights.title || \"AI Customer Churn Predictor\" }}",
+        "toEmail": "team@company.com",
+        "fromEmail": "sales@company.com"
+      },
+      "credentials": {
+        "smtp": {
+          "id": "uSsvXNMhZIEvThy5",
+          "name": "SMTP for ai-clients.com"
+        }
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "fdbd145a-98cc-42b2-b3e8-4d303faf08df",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        60,
+        -740
+      ],
+      "parameters": {
+        "height": 720,
+        "content": "### Main trigger\n\n❗**Must be updated.**\n\nReplace this with a CRM of choice + business logic\n\nMeaning: In your CRM, have tasks that you know if they're not completed by a certain time since its initial creation, churn becomes highly likely\n\nYou can get more creative than that - you can combine multiple task management & deliverable performance tracking sources to trigger this\n\n"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "efaf3350-9838-4dda-8d23-9e581ebb7309",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        320,
+        -740
+      ],
+      "parameters": {
+        "height": 720,
+        "content": "### AI Analysis & Recommendations\n\nWe use OpenAI's O3 to analyze the information provided to recommend action steps.\n\n❗Update per client to better attune the AI for recommendations."
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "fedea08d-9986-49aa-8c03-79649be3dcae",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        580,
+        -740
+      ],
+      "parameters": {
+        "height": 720,
+        "content": "### Parse AI insights into action steps\n\n❗**Must be updated**\n\nThis step parses the returned AI insights into individual items to be saved in your CRM or task management solution.\n\n"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "45a4acd4-2e88-46a0-8004-8ad37509a246",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        840,
+        -740
+      ],
+      "parameters": {
+        "height": 720,
+        "content": "### Add parsed AI insights to your CRM\n\n❗**Must be updated**\n\nThis step saves the parsed insights into your CRM or task management solution of choice.\n\nUpdate this towards the desired source - consider assigning tasks to the client record & to the best person to take the recommended actions."
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "41162338-6d38-450b-b437-4afd8f3a9ce1",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1100,
+        -740
+      ],
+      "parameters": {
+        "height": 720,
+        "content": "### Send urgent email to team for immediate action\n"
+      },
+      "typeVersion": 1
+    }
+  ],
+  "active": false,
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d605a22d-bcd1-48b4-bdbe-20b4dbbc93bc",
+  "connections": {
+    "AI Analyzer": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Insights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Main Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Analyzer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Insights": {
+      "main": [
+        [
+          {
+            "node": "Notify Team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Insights": {
+      "main": [
+        [
+          {
+            "node": "Store Insights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
