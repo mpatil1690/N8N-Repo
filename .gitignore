@@ -25,3 +25,8 @@ Thumbs.db
 npm-debug.log*
 tmp/
 temp/
+
+# Local workflow exports / backups
+n8n-export-all.json
+*.bak
+*.bak2

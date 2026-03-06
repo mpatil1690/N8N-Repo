@@ -1,0 +1,1030 @@
+{
+  "updatedAt": "2026-02-24T13:34:50.860Z",
+  "createdAt": "2026-02-16T08:58:43.760Z",
+  "id": "vRLRi6fbo5lbrDq2XFdUH",
+  "name": "LinkedIn Scrapper Version 2",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -3152,
+        688
+      ],
+      "id": "1d58ade3-6ae2-4707-93de-a40f362120af",
+      "name": "When clicking 'Execute workflow'"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/apimaestro~linkedin-profile-detail/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"username\": \"{{ $json.linkedinProfileUrl }}\",\n  \"includeEmail\": true\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -448,
+        768
+      ],
+      "id": "348c633c-f63a-4326-8778-28628f322daf",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "GEHW6tf6f5exjHDb",
+          "name": "Header Auth account"
+        },
+        "httpBearerAuth": {
+          "id": "79ijOCNP0G6p4ZLB",
+          "name": "Bearer Auth account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1QMUEaA-gjC25PHiUNw7RG-j-P7c3ylxY7BDe5_Egh4o",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 456476844,
+          "mode": "list",
+          "cachedResultName": "Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QMUEaA-gjC25PHiUNw7RG-j-P7c3ylxY7BDe5_Egh4o/edit#gid=456476844"
+        },
+        "options": {}
+      },
+      "id": "8cbf6a79-9951-4bf2-bf0d-99e1376c1840",
+      "name": "Read Companies",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -2912,
+        688
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "VYZgxMVYqHlbkDXs",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * n8n Code node: Resolve company URL\n */\nconst items = $input.all();\nconst out = [];\nconst COMPANY_PREFIX = 'https://www.linkedin.com/company/';\n\nfunction extractHandle(urlOrHandle) {\n  if (!urlOrHandle || typeof urlOrHandle !== 'string') return '';\n  const s = urlOrHandle.trim().replace(/^company\\//i, '');\n  const match = s.match(/linkedin\\.com\\/company\\/([^/?&#]+)/i);\n  return match ? match[1] : s;\n}\n\nfor (const item of items) {\n  const j = item.json;\n  const linkedInPage = (j['LinkedIn Company Page'] || j['Linkedin Company Page'] || '').toString().trim();\n  const handleCol = (j['Linkedin handle'] || j['LinkedIn handle'] || '').toString().trim().replace(/^company\\//i, '');\n  let companyUrl = '';\n  let skip = true;\n\n  if (linkedInPage && linkedInPage.toLowerCase().includes('linkedin.com')) {\n    const h = extractHandle(linkedInPage);\n    companyUrl = h ? COMPANY_PREFIX + h : linkedInPage;\n    skip = false;\n  } else if (handleCol) {\n    companyUrl = COMPANY_PREFIX + handleCol;\n    skip = false;\n  }\n\n  if (companyUrl && !companyUrl.startsWith(COMPANY_PREFIX)) {\n    const h = extractHandle(companyUrl);\n    if (h) companyUrl = COMPANY_PREFIX + h;\n  }\n\n  out.push({ json: { ...j, companyUrl, skip } });\n}\n\nreturn out;\n"
+      },
+      "id": "52967583-a4f4-482e-9817-e314dee76c5d",
+      "name": "Resolve company URL",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -2464,
+        624
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-1",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a4a846fe-d6e2-427d-8b6d-cc873c143303",
+      "name": "Has company URL?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        -2240,
+        624
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nstaticData.currentCompany = $input.first()?.json || {};\nreturn $input.all();\n"
+      },
+      "id": "c6f0ef2f-6c65-4d0f-9f01-2f0f4d2e7a1a",
+      "name": "Store current company",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -2016,
+        624
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * Post-filter profiles by title and attach company to each\n */\nconst staticData = $getWorkflowStaticData('global');\nconst company = staticData.currentCompany || {};\nconst raw = $input.all();\n\nlet profiles = raw;\nif (raw.length === 1 && raw[0].json) {\n  const j = raw[0].json;\n  if (Array.isArray(j)) {\n    profiles = j.map(el => ({ json: el }));\n  } else if (j.elements || j.data || j.items) {\n    const arr = j.elements || j.data || j.items;\n    profiles = Array.isArray(arr) ? arr.map(el => ({ json: el })) : raw;\n  }\n}\n\nconst keywords = [\n  'cto', 'ceo', 'cso', 'ciso', 'cio', 'chief', 'president', 'founder',\n  'executive officer', 'officer', 'vice president', 'vp ', ' group vp', 'group vice president',\n  'principal', 'advisory', 'managing director', 'board member', 'board advisor',\n  'cro', 'chief revenue', 'director,', 'director |', 'director @'\n];\nconst exclude = ['cfo', 'coo', 'chief financial', 'chief operating'];\nconst out = [];\n\nfor (const p of profiles) {\n  const j = p.json || p;\n  const titleText = (j.position || j.headline || j.title || '').toString().trim().toLowerCase();\n  if (exclude.some(e => titleText.includes(e))) continue;\n  const keep = titleText === '' || keywords.some(k => titleText.includes(k));\n  if (!keep) continue;\n\n  const name = (j.name || [j.firstName, j.lastName].filter(Boolean).join(' ').trim() || '').toString().trim();\n  let url = (j.linkedinUrl || j.profileUrl || j.url || (j.publicIdentifier ? 'https://www.linkedin.com/in/' + j.publicIdentifier : '') || '').toString().trim();\n  if (url && url.includes('linkedin.com/sales/')) url = '';\n  if (!url) continue;\n\n  out.push({\n    json: {\n      companyName: company['Company name'] || company['Company Name'] || '',\n      websiteUrl: company['Website URL'] || '',\n      city: company['City'] || '',\n      countryRegion: company['Country/Region'] || company['Country'] || '',\n      industry: company['Industry'] || '',\n      linkedInCompanyPage: company.companyUrl || company['LinkedIn Company Page'] || '',\n      executiveName: name,\n      title: (j.position || j.headline || j.title || '').toString().trim(),\n      linkedinProfileUrl: url,\n    },\n  });\n}\n\nreturn out;\n"
+      },
+      "id": "fe4a2b11-dba8-4b53-a9c8-6d17f2fff7f0",
+      "name": "Post-filter and attach company",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -1568,
+        576
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "d8c09794-0023-4e7c-86a5-18b2ea943f70",
+      "name": "Loop Over Profiles",
+      "type": "n8n-nodes-base.splitInBatches",
+      "position": [
+        -672,
+        768
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nstaticData.currentProfile = $input.first()?.json || {};\nreturn $input.all();\n"
+      },
+      "id": "b80f6b2a-2f8c-4c54-8a2d-7f0c4b4b9e30",
+      "name": "Store current profile",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -448,
+        768
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * Build one result row for the Results sheet\n */\nconst staticData = $getWorkflowStaticData('global');\nconst profile = staticData.currentProfile || {};\nconst detail = $input.first().json;\n\nconst email = detail && (detail.email || detail.emails)\n  ? (detail.email || (Array.isArray(detail.emails) ? detail.emails[0] : detail.emails))\n  : '';\nconst emailStr = typeof email === 'string' ? email : (email && email.value) || '';\nconst today = new Date().toISOString().split('T')[0];\n\nlet title = (profile.title || '').toString().trim();\nif (!title && detail) {\n  const d = detail;\n  title = (d.headline || d.title || d.position || '').toString().trim();\n  if (!title && Array.isArray(d.experience) && d.experience.length > 0) {\n    const first = d.experience[0];\n    title = (first.title || first.position || first.headline || '').toString().trim();\n  }\n  if (!title && Array.isArray(d.positions) && d.positions.length > 0) {\n    const first = d.positions[0];\n    title = (first.title || first.position || first.name || '').toString().trim();\n  }\n}\n\nreturn [{\n  json: {\n    'Company Name': profile.companyName,\n    'Website URL': profile.websiteUrl,\n    'City': profile.city,\n    'Country/Region': profile.countryRegion,\n    'Industry': profile.industry,\n    'LinkedIn Company Page': profile.linkedInCompanyPage,\n    'Executive Name': profile.executiveName,\n    'Title': title || '',\n    'LinkedIn Profile URL': profile.linkedinProfileUrl,\n    'Email': emailStr || '',\n    'Date Found': today,\n  },\n}];\n"
+      },
+      "id": "3c8ccfa7-8d29-4c9a-975c-a82fc7396867",
+      "name": "Build result row",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        0,
+        688
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1QMUEaA-gjC25PHiUNw7RG-j-P7c3ylxY7BDe5_Egh4o",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 871711302,
+          "mode": "list",
+          "cachedResultName": "Results",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QMUEaA-gjC25PHiUNw7RG-j-P7c3ylxY7BDe5_Egh4o/edit#gid=871711302"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Company Name",
+              "displayName": "Company Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Website URL",
+              "displayName": "Website URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Country/Region",
+              "displayName": "Country/Region",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Industry",
+              "displayName": "Industry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "LinkedIn Company Page",
+              "displayName": "LinkedIn Company Page",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Executive Name",
+              "displayName": "Executive Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "LinkedIn Profile URL",
+              "displayName": "LinkedIn Profile URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Date Found",
+              "displayName": "Date Found",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "fa49dd10-e8bb-4f49-9135-ab25ad8843b4",
+      "name": "Append to Results",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        224,
+        688
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "VYZgxMVYqHlbkDXs",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "id": "6ee0b551-aeb5-40bb-b25b-0a9bfe00fc0a",
+      "name": "Wait between profiles",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        672,
+        832
+      ],
+      "typeVersion": 1.1,
+      "webhookId": "7a28e116-ab25-460a-a84c-e3e1f568dbea"
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "id": "b9e238a2-995e-4699-9d00-a5c22f7915a2",
+      "name": "Wait between companies",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        0,
+        400
+      ],
+      "typeVersion": 1.1,
+      "webhookId": "65c79e3e-d1fd-46a5-b7e8-54a2178fa75d"
+    },
+    {
+      "parameters": {
+        "jsCode": "const j = $input.first().json;\nconst rowIndex = j?.__rowIndex;\nconst companyName = (j?.['Company name'] || j?.['Company Name'] || '').toString().trim();\nif (rowIndex == null && !companyName) return [];\nreturn [{ json: { __rowIndex: rowIndex, Status: 'Skipped - Missing Inputs', 'Company name': companyName } }];"
+      },
+      "id": "cb0573bb-0e0e-4207-8c99-c8cbd4eec614",
+      "name": "Prepare mark company skipped (no URL)",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -448,
+        1104
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/harvestapi~linkedin-profile-search/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"currentCompanies\": [\"{{ $json.companyUrl }}\"],\n  \"currentJobTitles\": [\"CTO\", \"CSO\", \"CISO\", \"CIO\", \"Chief Technology Officer\",  \"Chief Information Security Officer\", \"Chief Information Officer\", \"Head of QA\", \"Head of AI\"],\n  \"profileScraperMode\": \"Full\",\n  \"takePages\": 4,\n  \"maxItems\": 100\n}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -2016,
+        480
+      ],
+      "id": "7b950b96-f39c-47cb-ba2e-fffe7417f467",
+      "name": "HTTP Request1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "GEHW6tf6f5exjHDb",
+          "name": "Header Auth account"
+        },
+        "httpBearerAuth": {
+          "id": "79ijOCNP0G6p4ZLB",
+          "name": "Bearer Auth account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst items = $input.all();\nconst runnable = [];\nconst pending = [];\n\nfor (let i = 0; i < items.length; i++) {\n  const j = items[i].json;\n  const status = (j.Status || j.status || '').toString().trim().toLowerCase();\n\n  // Skip rows already completed\n  if (status.includes('done') || status.includes('skipped')) continue;\n\n  const rowIndex = i + 2;\n  const row = { json: { ...j, __rowIndex: rowIndex } };\n\n  // If you set Status = RUN in the sheet, we will process that company next\n  if (status === 'run' || status === 'run now') runnable.push(row);\n  else pending.push(row);\n}\n\nif (runnable.length) return [runnable[0]];\nif (pending.length) return [pending[0]];\nreturn [];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2688,
+        624
+      ],
+      "id": "2d7e5a45-7628-404a-a8f7-857cbcc95a73",
+      "name": "Add row index and filter by Status"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1QMUEaA-gjC25PHiUNw7RG-j-P7c3ylxY7BDe5_Egh4o/edit?gid=456476844#gid=456476844",
+          "__regex": "https:\\/\\/(?:drive|docs)\\.google\\.com(?:\\/.*|)\\/d\\/([0-9a-zA-Z\\-_]+)(?:\\/.*|)"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 456476844,
+          "mode": "list",
+          "cachedResultName": "Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QMUEaA-gjC25PHiUNw7RG-j-P7c3ylxY7BDe5_Egh4o/edit#gid=456476844"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "={{ $json.Status }}",
+            "row_number": "={{ $json.__rowIndex }}",
+            "Company name": "={{ $json['Company name'] }}"
+          },
+          "matchingColumns": [
+            "Company name"
+          ],
+          "schema": [
+            {
+              "id": "Company name",
+              "displayName": "Company name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -224,
+        400
+      ],
+      "id": "7c874b45-f890-40fb-9ea9-3b544dc864d8",
+      "name": "Update company status",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "VYZgxMVYqHlbkDXs",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "profile-detail-ok",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "any",
+                "operation": "notExists"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        768
+      ],
+      "id": "584916d8-9990-4a05-a277-bf86408eb1cd",
+      "name": "Profile detail succeeded?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nstaticData.companyResultCount = 0;\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -896,
+        768
+      ],
+      "id": "c87d28a5-6a76-4db9-8848-c9ef9dfc69d6",
+      "name": "Init result count"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nif (items.length === 0) {\n  const staticData = $getWorkflowStaticData('global');\n  const company = staticData.currentCompany || {};\n  return [{ json: { __noProfiles: true, __rowIndex: company.__rowIndex, 'Company name': company['Company name'] || company['Company Name'] || '' } }];\n}\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1344,
+        576
+      ],
+      "id": "244b6208-7bbc-4251-80ed-93637dd495e0",
+      "name": "Ensure at least one item"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "has-profiles",
+              "leftValue": "={{ $json.__noProfiles }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -1120,
+        576
+      ],
+      "id": "8971f96c-94a2-49b7-8acf-59df6b4a3e14",
+      "name": "Has profiles?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const j = $input.first().json;\nreturn [{ json: { __rowIndex: j.__rowIndex, Status: 'Done - No CTO Found', 'Company name': j['Company name'] || j['Company Name'] || '' } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        304
+      ],
+      "id": "589b79b5-13d3-4643-917a-c9adc4c7ec59",
+      "name": "Set count 0 and no results"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "profile-search-ok",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "any",
+                "operation": "notExists"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -1792,
+        480
+      ],
+      "id": "c4ec6c91-8e36-4897-959d-db0537d65f84",
+      "name": "Profile search OK?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst company = staticData.currentCompany || {};\nconst err = $input.first().json?.error?.message || $input.first().json?.message || 'API_ERROR';\nconst rowIndex = company?.__rowIndex;\nif (rowIndex == null) return [];\nreturn [{ json: { __rowIndex: rowIndex, Status: 'Done - Error: ' + (String(err).slice(0, 50)), 'Company name': company['Company name'] || company['Company Name'] || '' } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        112
+      ],
+      "id": "c5b9389c-bb5b-46a4-ab39-326f4e1be7fd",
+      "name": "Prepare mark company error"
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nstaticData.companyResultCount = (staticData.companyResultCount || 0) + 1;\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        688
+      ],
+      "id": "50c06576-c09b-4b70-8b1f-fb2f0b3c8828",
+      "name": "Increment result count"
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst company = staticData.currentCompany || {};\nconst rowIndex = company.__rowIndex;\nconst count = staticData.companyResultCount || 0;\nconst status = count > 0 ? 'Done - Found' : 'Done - No CTO Found';\nif (rowIndex == null) return [];\nreturn [{ json: { __rowIndex: rowIndex, Status: status, 'Company name': company['Company name'] || company['Company Name'] || '' } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        496
+      ],
+      "id": "d6f93a55-ac29-4867-9176-dbf9d37a68d0",
+      "name": "Prepare mark company by count"
+    }
+  ],
+  "connections": {
+    "When clicking 'Execute workflow'": {
+      "main": [
+        [
+          {
+            "node": "Read Companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Companies": {
+      "main": [
+        [
+          {
+            "node": "Add row index and filter by Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add row index and filter by Status": {
+      "main": [
+        [
+          {
+            "node": "Resolve company URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve company URL": {
+      "main": [
+        [
+          {
+            "node": "Has company URL?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has company URL?": {
+      "main": [
+        [
+          {
+            "node": "Store current company",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare mark company skipped (no URL)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store current company": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Profile search OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Profile search OK?": {
+      "main": [
+        [
+          {
+            "node": "Post-filter and attach company",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare mark company error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare mark company error": {
+      "main": [
+        [
+          {
+            "node": "Update company status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post-filter and attach company": {
+      "main": [
+        [
+          {
+            "node": "Ensure at least one item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ensure at least one item": {
+      "main": [
+        [
+          {
+            "node": "Has profiles?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has profiles?": {
+      "main": [
+        [
+          {
+            "node": "Init result count",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set count 0 and no results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set count 0 and no results": {
+      "main": [
+        [
+          {
+            "node": "Update company status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Init result count": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Profiles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Profiles": {
+      "main": [
+        [
+          {
+            "node": "Prepare mark company by count",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Store current profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store current profile": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Profile detail succeeded?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Profile detail succeeded?": {
+      "main": [
+        [
+          {
+            "node": "Build result row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait between profiles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build result row": {
+      "main": [
+        [
+          {
+            "node": "Append to Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append to Results": {
+      "main": [
+        [
+          {
+            "node": "Increment result count",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Increment result count": {
+      "main": [
+        [
+          {
+            "node": "Wait between profiles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait between profiles": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Profiles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare mark company by count": {
+      "main": [
+        [
+          {
+            "node": "Update company status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update company status": {
+      "main": [
+        [
+          {
+            "node": "Wait between companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait between companies": {
+      "main": [
+        [
+          {
+            "node": "Read Companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare mark company skipped (no URL)": {
+      "main": [
+        [
+          {
+            "node": "Update company status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "6c68561e-0f70-4dc4-b84f-8bb106672dab",
+  "activeVersionId": null,
+  "versionCounter": 14,
+  "triggerCount": 0,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-02-16T08:58:43.763Z",
+      "createdAt": "2026-02-16T08:58:43.763Z",
+      "role": "workflow:owner",
+      "workflowId": "vRLRi6fbo5lbrDq2XFdUH",
+      "projectId": "52YL3rld5jA6tW6I",
+      "project": {
+        "updatedAt": "2026-01-30T17:07:26.118Z",
+        "createdAt": "2026-01-30T00:43:48.470Z",
+        "id": "52YL3rld5jA6tW6I",
+        "name": "Malati Patil <malati.patil@thesimplifai.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "32fc7d8e-a1d7-443e-9629-3853f8be4a9e"
+      }
+    }
+  ]
+}
