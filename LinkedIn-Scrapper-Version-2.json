@@ -392,7 +392,7 @@
         "genericAuthType": "httpBearerAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"currentCompanies\": [\"{{ $json.companyUrl }}\"],\n  \"currentJobTitles\": [\"CTO\", \"CSO\", \"CISO\", \"CIO\", \"Chief Technology Officer\",  \"Chief Information Security Officer\", \"Chief Information Officer\", \"Head of QA\", \"Head of AI\"],\n  \"profileScraperMode\": \"Full\",\n  \"takePages\": 4,\n  \"maxItems\": 100\n}",
+        "jsonBody": "={\n  \"currentCompanies\": [\"{{ $json.companyUrl }}\"],\n  \"currentJobTitles\": [\"CTO\", \"CSO\", \"CISO\", \"CIO\", \"Chief Technology Officer\",  \"Chief Information Security Officer\", \"Chief Information Officer\", \"Head of QA\", \"Head of AI\"],\n  \"profileScraperMode\": \"Full\",\n  \"takePages\": 1,\n  \"maxItems\": 25\n}",
         "options": {
           "timeout": 300000
         }
@@ -658,6 +658,38 @@
       ],
       "id": "50c06576-c09b-4b70-8b1f-fb2f0b3c8828",
       "name": "Increment result count"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "reached-limit",
+              "leftValue": "={{ ($getWorkflowStaticData('global').companyResultCount || 0) >= 5 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        896,
+        688
+      ],
+      "id": "c2c1b6fd-80d6-4c62-8e74-8b6e9c7b0c11",
+      "name": "Reached result limit?"
     },
     {
       "parameters": {
@@ -931,6 +963,24 @@
     },
     "Increment result count": {
       "main": [
+        [
+          {
+            "node": "Reached result limit?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reached result limit?": {
+      "main": [
+        [
+          {
+            "node": "Prepare mark company by count",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "Wait between profiles",
