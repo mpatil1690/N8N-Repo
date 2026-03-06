@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# n8n
+.n8n/
+*.sqlite
+*.sqlite3
+
+# Environment and secrets (never commit these)
+.env
+.env.local
+.env.*.local
+*.pem
+
+# OS and editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs and temp
+*.log
+npm-debug.log*
+tmp/
+temp/

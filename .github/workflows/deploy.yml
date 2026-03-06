@@ -1,0 +1,30 @@
+# Deploy to Hostinger on push to main
+# GitHub Secrets: HOSTINGER_HOST, HOSTINGER_USER, HOSTINGER_SSH_KEY, HOSTINGER_DEPLOY_PATH
+# Optional: HOSTINGER_PORT (set to 22 for VPS; shared hosting often uses 65002)
+
+name: Deploy to Hostinger
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOSTINGER_HOST }}
+          username: ${{ secrets.HOSTINGER_USER }}
+          key: ${{ secrets.HOSTINGER_SSH_KEY }}
+          port: ${{ secrets.HOSTINGER_PORT }}
+          script: |
+            cd ${{ secrets.HOSTINGER_DEPLOY_PATH }}
+            git pull origin main
+            # Uncomment if you need to install deps or restart n8n:
+            # npm ci --omit=dev
+            # pm2 restart n8n
