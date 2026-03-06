@@ -392,7 +392,7 @@
         "genericAuthType": "httpBearerAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"currentCompanies\": [\"{{ $json.companyUrl }}\"],\n  \"currentJobTitles\": [\n    \"CTO\",\n    \"Chief Technology Officer\",\n    \"CISO\",\n    \"Chief Information Security Officer\",\n    \"CIO\",\n    \"Chief Information Officer\"\n  ],\n  \"profileScraperMode\": \"Full\",\n  \"takePages\": 1,\n  \"maxItems\": 25\n}",
+        "jsonBody": "={\n  \"currentCompanies\": [\"{{ $json.companyUrl }}\"],\n  \"currentJobTitles\": [\n    \"CTO\",\n    \"Chief Technology Officer\",\n    \"CISO\",\n    \"Chief Information Security Officer\",\n    \"CIO\",\n    \"Chief Information Officer\"\n  ],\n  \"profileScraperMode\": \"Full\",\n  \"takePages\": 2,\n  \"maxItems\": 50\n}",
         "options": {
           "timeout": 300000
         }
