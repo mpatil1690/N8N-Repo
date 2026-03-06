@@ -1,0 +1,309 @@
+{
+  "id": "XkpNRbS9vXXXzKHe",
+  "meta": {
+    "instanceId": "da4ab0dfab9545594afdbbd8e2347c29274c36efe4d80cdc8b66410174bf5bec"
+  },
+  "name": "Featured - WhatsApp AI Sales Chatbot",
+  "tags": [],
+  "nodes": [
+    {
+      "id": "a14f1e87-59b3-4c25-88ce-d97a88f45d4a",
+      "name": "WhatsApp Trigger",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "84527224-427d-4a10-abc2-016e1b64e3ce",
+      "parameters": {
+        "options": {},
+        "updates": [
+          "messages"
+        ]
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "22c2dcd3-d111-45ac-b5c4-77b03d1803e6",
+      "name": "Analyze Lead Quality",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "position": [
+        780,
+        0
+      ],
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o",
+          "cachedResultName": "GPT-4O"
+        },
+        "options": {
+          "temperature": 0.3
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Analyze this conversation and determine if the customer is a qualified lead. Message: {{ $(\"WhatsApp Trigger\").item.json.message.text }}. AI Response: {{ $json.choices[0].message.content }}. Return JSON with isQualifiedLead (boolean), leadScore (1-100), and nextAction (string).\n"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "xxxxxxxxxxxxxxxx",
+          "name": "xxxxx"
+        }
+      },
+      "typeVersion": 1.8
+    },
+    {
+      "id": "e800e883-508b-44d1-b81c-2b4ee19c39d2",
+      "name": "Generate AI Response",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "name": "WhatsApp Chat Reply Agent",
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o",
+          "cachedResultName": "GPT-4O"
+        },
+        "options": {
+          "temperature": 0.7
+        },
+        "resource": "assistant",
+        "operation": "create",
+        "instructions": "=You are a sales assistant for our company. Respond to this WhatsApp message professionally and helpfully. If the customer is asking about products, pricing, or wants to schedule a meeting, provide appropriate responses. Message: {{ $json.message.text }}. Customer: {{ $json.message.from }}\n"
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "RL2T9qzlXCBXalW4",
+          "name": "OpenAi account"
+        }
+      },
+      "typeVersion": 1.8
+    },
+    {
+      "id": "48487630-1a95-43a3-8479-edfa0f8fa88e",
+      "name": "Send WhatsApp Response",
+      "type": "n8n-nodes-base.whatsApp",
+      "position": [
+        520,
+        0
+      ],
+      "webhookId": "42384e0e-9399-4836-b655-2483eafc6c68",
+      "parameters": {
+        "textBody": "=\"{{ $(\"Generate AI Response\").item.json.choices[0].message.content }}\"",
+        "operation": "send",
+        "additionalFields": {},
+        "recipientPhoneNumber": "={{ $(\"WhatsApp Trigger\").item.json.message.from }}"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "8c57d675-c170-465b-bbc4-1ef46682d8c6",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "options": {},
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "e06221df-3c51-4d7b-80be-9f80659a3265",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $(\"WhatsApp Trigger\").item.json.nextAction }}",
+              "rightValue": "True"
+            }
+          ]
+        }
+      },
+      "typeVersion": 2.2
+    },
+    {
+      "id": "69f73655-6111-473b-8b51-77a064a4185e",
+      "name": "HubSpot",
+      "type": "n8n-nodes-base.hubspot",
+      "position": [
+        1500,
+        -100
+      ],
+      "parameters": {
+        "options": {},
+        "additionalFields": {
+          "phoneNumber": "={{ $(\"WhatsApp Trigger\").item.json.message.from }}"
+        }
+      },
+      "typeVersion": 2.1
+    },
+    {
+      "id": "59812cc9-ef51-43f7-ab7e-8a5a291358a8",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -80,
+        -360
+      ],
+      "parameters": {
+        "height": 620,
+        "content": "### WhatsApp Message Received\n\n❗**Must be updated**\n- Connect with WhatsApp credentials\n"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "ad46025e-14e9-48f6-b9ca-119bbb968b44",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        180,
+        -360
+      ],
+      "parameters": {
+        "height": 620,
+        "content": "### WhatsApp Message Received\n\n❗**Must be updated**\n- Connect with OpenAI credentials\n- Consider connecting to a company knowledge base to provide better asssitance\n"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "2a9c3d3e-cf39-4496-b802-bf6c8805f9ba",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        440,
+        -360
+      ],
+      "parameters": {
+        "height": 620,
+        "content": "### Send WhatsApp Response\n\n❗**Must be updated**\n- Connect with WhatsApp credentials\n"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "85b6ce10-a071-4a33-826a-43a0d4dcb35e",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        700,
+        -360
+      ],
+      "parameters": {
+        "width": 400,
+        "height": 620,
+        "content": "### Analyze Lead Quality\n\nReturns a JSON object with a lead score & true/false boolean flag\n\n❗**Must be updated**\n- Connect with OpenAI credentials\n\n\n#### Prompt\nAnalyze this conversation and determine if the customer is a qualified lead. Message: {{ $(\"WhatsApp Trigger\").item.json.message.text }}. AI Response: {{ $json.choices[0].message.content }}. Return JSON with isQualifiedLead (boolean), leadScore (1-100), and nextAction (string).\n\n"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "76347196-401d-4de9-9fbd-3a9facaef902",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1120,
+        -360
+      ],
+      "parameters": {
+        "width": 280,
+        "height": 620,
+        "content": "### Route according to AI analyzed qualifications\n\n\"True\" is provided in a JSON object response in the previous step"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "6cf73def-124a-4ce0-811c-ef65db554c6d",
+      "name": "Sticky Note5",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1420,
+        -360
+      ],
+      "parameters": {
+        "width": 280,
+        "height": 620,
+        "content": "### Update/Create Contact In CRM\n\n❗**Must be updated**\n- HubSpot Credentials\n- Add a lead score property in your sales CRM\n- Change to point towards desired sales CRM "
+      },
+      "typeVersion": 1
+    }
+  ],
+  "active": false,
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9183106a-bb21-4aaa-a84e-a875863c6071",
+  "connections": {
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HubSpot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "Generate AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Lead Quality": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate AI Response": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send WhatsApp Response": {
+      "main": [
+        [
+          {
+            "node": "Analyze Lead Quality",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

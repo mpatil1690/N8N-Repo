@@ -1,0 +1,362 @@
+{
+  "id": "JrvfVv7yatp2C3ey",
+  "meta": {
+    "instanceId": "da4ab0dfab9545594afdbbd8e2347c29274c36efe4d80cdc8b66410174bf5bec",
+    "templateCredsSetupCompleted": true
+  },
+  "name": "Featured - Sales Pipeline Automation",
+  "tags": [],
+  "nodes": [
+    {
+      "id": "cda513a8-e7b1-4568-a67c-21bdcf5c92fb",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "1e1e901d-b770-4716-a395-1eb3d00134ef",
+      "parameters": {
+        "path": "new-lead",
+        "options": {},
+        "httpMethod": "POST"
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "82bd05eb-7ac1-47dc-b260-d97040981c67",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        816,
+        0
+      ],
+      "parameters": {
+        "options": {},
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "3f2a8ae9-2cfb-451e-8a15-6ed69c8dfc52",
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              },
+              "leftValue": "={{ $('AI Lead Scorer').item.json.score }}\n",
+              "rightValue": 70
+            }
+          ]
+        }
+      },
+      "typeVersion": 2.2
+    },
+    {
+      "id": "9bcd4286-1556-4a19-b7e4-0313c018a706",
+      "name": "Create a Deal",
+      "type": "n8n-nodes-base.pipedrive",
+      "position": [
+        596,
+        0
+      ],
+      "parameters": {
+        "title": "={{ $('Webhook').item.json.company }} - {{ $('Webhook').item.json.firstName }} {{ $('Webhook').item.json.lastName }}",
+        "additionalFields": {
+          "value": "={{ $('Webhook').item.json.estimatedValue || 0 }}\n",
+          "stage_id": "",
+          "person_id": "={{ $('Webhook').item.json.personId }}"
+        }
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "c1dca2c4-a0aa-4d06-a6f5-c7a76a7aca7a",
+      "name": "Schedule a Follow-Up Event",
+      "type": "n8n-nodes-base.googleCalendar",
+      "position": [
+        1036,
+        -100
+      ],
+      "parameters": {
+        "end": "={{ $now.plus({hours: 24, minutes: 30}).toISO() }}\n",
+        "start": "={{ $now.plus({hours: 24}).toISO() }}\n",
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "additionalFields": {
+          "summary": "=Follow-up call with {{ $('Webhook').item.json.firstName }} {{ $('Webhook').item.json.lastName }}",
+          "description": "=High-value lead follow-up call. Lead score: {{ $('AI Lead Scorer').item.json.score }}"
+        }
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "xxxxxxxxxxxxxxxx",
+          "name": "xxxxx"
+        }
+      },
+      "typeVersion": 1.3
+    },
+    {
+      "id": "1f0d8473-6fe5-439f-b8f0-b596cd013ba5",
+      "name": "Send Email To Prospect",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1320,
+        -100
+      ],
+      "webhookId": "8b25006c-8001-4b08-ba7b-5ec9658b8f16",
+      "parameters": {
+        "html": "=Hi {{ $('Webhook').item.json.firstName }},\n\nThank you for your interest in our solution. Based on your requirements, I believe we can help {{ $('Webhook').item.json.company }} achieve significant results.\n\nI'll be reaching out within 24 hours to schedule a personalized demo.\n\nBest regards,  \nSales Team\n",
+        "options": {},
+        "subject": "Thanks for your interest in our solution",
+        "toEmail": "={{ $('Webhook').item.json.email }}"
+      },
+      "credentials": {
+        "smtp": {
+          "id": "xxxxxxxxxxxxxxxx",
+          "name": "xxxxx"
+        }
+      },
+      "typeVersion": 2.1
+    },
+    {
+      "id": "423f12d9-2571-41cf-aaa2-277036e129a6",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1060,
+        600
+      ],
+      "webhookId": "d3b8ffb8-bd72-411c-8555-11933dca0dbe",
+      "parameters": {
+        "html": "=Hi {{ $('Webhook').item.json.firstName }},\n\nThank you for your interest in our solution. Based on your requirements, I believe we can help {{ $('Webhook').item.json.company }} achieve significant results.\n\nI'll be reaching out within 24 hours to schedule a personalized demo.\n\nBest regards,  \nSales Team\n",
+        "options": {},
+        "subject": "Welcome! Here's what's next",
+        "toEmail": "={{ $('Webhook').item.json.email }}"
+      },
+      "credentials": {
+        "smtp": {
+          "id": "xxxxxxxxxxxxxxxx",
+          "name": "xxxxx"
+        }
+      },
+      "typeVersion": 2.1
+    },
+    {
+      "id": "a0caa3da-7268-4ba0-8b7a-c5988b859f74",
+      "name": "AI Lead Scorer",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "chatgpt-4o-latest",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "options": {
+          "temperature": 0.2
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Score this lead from 1-100 based on the following criteria: company size, budget, decision-making authority, timeline, and fit with our product. Lead data: {{ JSON.stringify($json) }}. Return only a JSON object with score and reasoning.\n"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "xxxxxxxxxxxxxxxx",
+          "name": "xxxxx"
+        }
+      },
+      "typeVersion": 1.8
+    },
+    {
+      "id": "e215be7f-e47c-4523-ad73-d16e88f9ecf6",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -60,
+        -340
+      ],
+      "parameters": {
+        "width": 220,
+        "height": 700,
+        "content": "### Trigger Workflow On Endpoint Activation\n\nEndpoint will receive messages at ```https://n8n.blaiseai.com/webhook-test/new-lead```"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "e675fa43-a729-4e63-b1cc-1caa633150bf",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        180,
+        -340
+      ],
+      "parameters": {
+        "width": 340,
+        "height": 700,
+        "content": "### AI Lead Scorer\n\nReturns a lead score with reasoning based on provided lead data\n\n❗**Must be updated**\n\n\n### Prompt\nScore this lead from 1-100 based on the following criteria: company size, budget, decision-making authority, timeline, and fit with our product. Lead data: {{ JSON.stringify($json) }}. Return only a JSON object with score and reasoning.\n"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "04e592ab-d84a-4fe8-9e23-4edb8d53ce40",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        540,
+        -340
+      ],
+      "parameters": {
+        "width": 200,
+        "height": 700,
+        "content": "### AI Lead Scorer\n\nCreates a deal with lead data\n\n❗**Must be updated**\n- To sales CRM of choice\n- Add a \"lead score\" property on your sales CRM and to this step referring to the previous step's JSON lead score ({{ $json.score }})\n\n"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "a1c32680-e49e-45f5-a79d-dedfafec99f9",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        760,
+        -340
+      ],
+      "parameters": {
+        "width": 200,
+        "height": 700,
+        "content": "### If Router\n\n\"True\" based on a lead score of 70\n"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "74c381d4-6d07-4e79-8b9c-68edf549f543",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        980,
+        -540
+      ],
+      "parameters": {
+        "width": 200,
+        "height": 620,
+        "content": "### Schedule Reminder\n\nCreates 30 minute event reminder to follow-up with lead 24 hours from initial trigger execution\n\n❗**Must be updated**\n- Add Google credentials\n\n"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "495af090-201b-4625-9792-b31250b7845a",
+      "name": "Sticky Note5",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        980,
+        100
+      ],
+      "parameters": {
+        "width": 460,
+        "height": 680,
+        "content": "### Send Standard Email\n\n❗**Must be updated**\nAdd \"From\" email & credentials\n\n**Email Subject**\nWelcome! Here's what's next\n\n**Email Body:**\nHi {{ $('Webhook').item.json.firstName }},\n\nThank you for your interest in our solution. Based on your requirements, I believe we can help {{ $('Webhook').item.json.company }} achieve significant results.\n\nI'll be reaching out within 24 hours to schedule a personalized demo.\n\nBest regards,  \nSales Team\n"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "051f481e-461b-409a-9aaf-fd7701bcd082",
+      "name": "Sticky Note6",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1200,
+        -540
+      ],
+      "parameters": {
+        "width": 360,
+        "height": 620,
+        "content": "### Send Priority Email\n\n\n❗**Must be updated**\nAdd \"From\" email & credentials\n\n**Email Subject**\nThanks for your interest in our solution\n\n**Email Body**\nHi {{ $('Webhook').item.json.firstName }},\n\nThank you for your interest in our solution. Based on your requirements, I believe we can help {{ $('Webhook').item.json.company }} achieve significant results.\n\nI'll be reaching out within 24 hours to schedule a personalized demo.\n\nBest regards,  \nSales Team\n\n"
+      },
+      "typeVersion": 1
+    }
+  ],
+  "active": false,
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9e8ed4bd-058f-4c9f-9973-dcdfc06eae2a",
+  "connections": {
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Schedule a Follow-Up Event",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Lead Scorer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a Deal": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Lead Scorer": {
+      "main": [
+        [
+          {
+            "node": "Create a Deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule a Follow-Up Event": {
+      "main": [
+        [
+          {
+            "node": "Send Email To Prospect",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

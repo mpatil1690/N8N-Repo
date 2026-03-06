@@ -1,0 +1,226 @@
+{
+  "id": "kjhr60MxLtKp3UxW",
+  "meta": {
+    "instanceId": "da4ab0dfab9545594afdbbd8e2347c29274c36efe4d80cdc8b66410174bf5bec"
+  },
+  "name": "Featured - Customer Support Ticket Routing",
+  "tags": [],
+  "nodes": [
+    {
+      "id": "23c3af6e-8655-47e3-a1c0-cc5001a0b8f2",
+      "name": "Monitor Support Emails",
+      "type": "n8n-nodes-base.emailReadImap",
+      "position": [
+        180,
+        -180
+      ],
+      "parameters": {
+        "options": {}
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "a20f3d65-bbb9-40ad-8c7d-6640f7b07783",
+      "name": "AI Ticket Analysis",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        420,
+        -180
+      ],
+      "parameters": {
+        "prompt": "Analyze this support ticket and classify it. Extract: 1) Priority (low/medium/high/urgent), 2) Category (technical/billing/general), 3) Required expertise level (junior/senior/expert), 4) Estimated complexity (1-10). Email content: {{ $json.text }}",
+        "options": {
+          "temperature": 0.3
+        },
+        "requestOptions": {}
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "RL2T9qzlXCBXalW4",
+          "name": "OpenAi account"
+        }
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "82cc9eb2-4c51-4118-b11f-a5843630aa24",
+      "name": "Find Best Available Agent",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        680,
+        -180
+      ],
+      "parameters": {
+        "query": "SELECT agent_id, name, expertise, current_workload FROM support_agents WHERE expertise LIKE '%{{ $json.category }}%' AND current_workload < 10 ORDER BY current_workload ASC LIMIT 1",
+        "options": {},
+        "operation": "executeQuery"
+      },
+      "credentials": {
+        "postgres": {
+          "id": "f5FwnXgKh1JYuPsz",
+          "name": "The Genesis"
+        }
+      },
+      "typeVersion": 2.4
+    },
+    {
+      "id": "f39a773e-d31f-4d84-ab80-5366a5a66146",
+      "name": "Create Support Ticket",
+      "type": "n8n-nodes-base.freshdesk",
+      "position": [
+        940,
+        -180
+      ],
+      "parameters": {
+        "options": {}
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "692167fc-73f0-488a-bba4-60c897a7963d",
+      "name": "Notify Assigned Agent",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1200,
+        -180
+      ],
+      "webhookId": "0eefd166-ddf9-43e6-ba12-eb5942758c96",
+      "parameters": {
+        "text": "A new {{ $('AI Ticket Analysis').item.json.category }} ticket has been assigned to you.\n\nTicket ID: {{ $json.id }}\nPriority: {{ $('AI Ticket Analysis').item.json.priority }}\nSubject: {{ $('Monitor Support Emails').item.json.subject }}",
+        "options": {},
+        "subject": "New {{ $('AI Ticket Analysis').item.json.priority }} priority ticket assigned",
+        "toEmail": "={{ $('Find Best Available Agent').item.json.email }}",
+        "fromEmail": "support@company.com"
+      },
+      "credentials": {
+        "smtp": {
+          "id": "uSsvXNMhZIEvThy5",
+          "name": "SMTP for ai-clients.com"
+        }
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "f12cf79c-58f2-4824-a493-088dad7d72a0",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        100,
+        -660
+      ],
+      "parameters": {
+        "height": 780,
+        "content": "### Main trigger\n\n❗**Must be updated.**\n\nConnect to the desired support email\n\n"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "ff6a7eea-122c-48c7-bc22-b682b1d40fb8",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        360,
+        -660
+      ],
+      "parameters": {
+        "height": 780,
+        "content": "### AI Analysis & Recommendations\n\nWe use OpenAI's O3 to analyze the information provided to recommend action steps.\n\n❗Update with your own OpenAI credentials"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "c73e4cb2-c68c-4377-86d3-25dfe755a4d7",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        620,
+        -660
+      ],
+      "parameters": {
+        "height": 780,
+        "content": "### Query database\n\nThis step queries a SQL database for an available customer support rep\n\n### SQL Query: \nSELECT agent_id, name, expertise, current_workload FROM support_agents WHERE expertise LIKE '%{{ $json.category }}%' AND current_workload < 10 ORDER BY current_workload ASC LIMIT 1\n\n\n\n❗Should be updated if you don't plan to use a SQL database for measuring current customer support rep capacity"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "99f659dc-d099-4cd5-9c77-b1a04c8d9005",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        880,
+        -660
+      ],
+      "parameters": {
+        "height": 780,
+        "content": "### Create a support ticket\n\n❗**Must be updated**\n\nAssigns the support ticket to the available rep"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "67acc7b5-0e19-4480-8d7f-9a9ce4c004a6",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1140,
+        -660
+      ],
+      "parameters": {
+        "height": 780,
+        "content": "### Send email to team\n\n❗**Must be updated**\n\nSends an email notification to the assigned customer support rep"
+      },
+      "typeVersion": 1
+    }
+  ],
+  "active": false,
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "06103dc6-9d80-4629-827a-d08863e420ae",
+  "connections": {
+    "AI Ticket Analysis": {
+      "main": [
+        [
+          {
+            "node": "Find Best Available Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Support Ticket": {
+      "main": [
+        [
+          {
+            "node": "Notify Assigned Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Monitor Support Emails": {
+      "main": [
+        [
+          {
+            "node": "AI Ticket Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Best Available Agent": {
+      "main": [
+        [
+          {
+            "node": "Create Support Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,1012 @@
+{
+  "id": "xxxxxxxxxxxxxx",
+  "meta": {
+    "instanceId": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  },
+  "name": "AI-POWERED SHORT-FORM VIDEO CLIP GENERATOR",
+  "tags": [],
+  "nodes": [
+    {
+      "id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "name": "Wait",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        1240,
+        -60
+      ],
+      "webhookId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "parameters": {
+        "unit": "minutes"
+      },
+      "typeVersion": 1.1
+    },
+    {
+      "id": "ccc714c1-54c8-45a5-b8a7-63dc3f5e09df",
+      "name": "Get Longform",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        1240,
+        -200
+      ],
+      "parameters": {
+        "options": {
+          "returnFirstMatch": true
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupValue": "for production",
+              "lookupColumn": "production_status"
+            }
+          ]
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/edit#gid=0",
+          "cachedResultName": "Sheet1"
+        },
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/edit?usp=drivesdk",
+          "cachedResultName": "Clips Sheet"
+        }
+      },
+      "typeVersion": 4.5
+    },
+    {
+      "id": "8ff87a5c-4b68-44a1-ada3-6e7676bd4937",
+      "name": "Get Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1400,
+        -60
+      ],
+      "parameters": {
+        "url": "=https://api.klap.app/v2/tasks/{{ $json.id }}",
+        "options": {},
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "7b37b97b-6f8d-417b-9e83-0190a5e34bbc",
+      "name": "Export Shorts",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1080,
+        80
+      ],
+      "parameters": {
+        "url": "=https://api.klap.app/v2/projects/{{ $json.folder_id }}/{{ $json.id }}/exports",
+        "method": "POST",
+        "options": {},
+        "jsonBody": "={\n  \"preset_id\": \"xxx\"\n}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "955afc06-bfa7-4cd5-bdf1-2f4661036e27",
+      "name": "Get Shorts",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1400,
+        80
+      ],
+      "parameters": {
+        "url": "=https://api.klap.app/v2/projects/{{ $json.folder_id }}/{{ $json.id }}/exports/{{ $json.id }}",
+        "options": {},
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "59caa95b-6f03-4f8a-b735-5c5d0b4c34ae",
+      "name": "YOUTUBE",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1720,
+        500
+      ],
+      "parameters": {
+        "url": "https://backend.blotato.com/v2/posts",
+        "method": "POST",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 10000
+            }
+          }
+        },
+        "jsonBody": "={\n  \"post\": {\n    \"target\": {\n      \"targetType\": \"youtube\",\n      \"title\": \"{{ $('Get Shorts Details').item.json.name }}\",\n      \"privacyStatus\": \"unlisted\",\n      \"shouldNotifySubscribers\":false\n    },\n    \"content\": {\n      \"text\": \"{{ $('Get Shorts Details').item.json.publication_captions.youtube }}\",\n      \"platform\": \"youtube\",\n      \"mediaUrls\": [\"{{ $json.url }}\"]\n    },\n    \"accountId\": \"xxxxx\"\n  }\n}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "f99b806d-4bec-4856-ab67-225e722597e1",
+      "name": "INSTAGRAM",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1720,
+        360
+      ],
+      "parameters": {
+        "url": "https://backend.blotato.com/v2/posts",
+        "method": "POST",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 10000
+            }
+          }
+        },
+        "jsonBody": "={\n  \"post\": {\n    \"target\": {\n      \"targetType\": \"instagram\"\n    },\n    \"content\": {\n      \"text\": \"{{ $('Get Shorts Details').item.json.publication_captions.instagram }}\",\n      \"platform\": \"instagram\",\n      \"mediaUrls\": [\"{{ $json.url }}\"]\n    },\n    \"accountId\": \"xxxxx\"\n  }\n}\n",
+        "sendBody": true,
+        "specifyBody": "json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "65a7ab82-ccfd-4dca-be38-fd3fbfd872a5",
+      "name": "TIKTOK",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1720,
+        220
+      ],
+      "parameters": {
+        "url": "https://backend.blotato.com/v2/posts",
+        "method": "POST",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 10000
+            }
+          }
+        },
+        "jsonBody": "={\n  \"post\": {\n    \"target\": {\n      \"targetType\": \"tiktok\",\n      \"isYourBrand\": false,\n      \"disabledDuet\": false,\n      \"privacyLevel\": \"PUBLIC_TO_EVERYONE\",\n      \"isAiGenerated\": false,\n      \"disabledStitch\": false,\n      \"disabledComments\": false,\n      \"isBrandedContent\": false\n    },\n    \"content\": {\n      \"text\": \"{{ $('Get Shorts Details').item.json.publication_captions.tiktok }}\",\n      \"platform\": \"tiktok\",\n      \"mediaUrls\": [\"{{ $json.url }}\"]\n    },\n    \"accountId\": \"xxxxx\"\n  }\n} ",
+        "sendBody": true,
+        "specifyBody": "json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "9c3d15ec-a021-4981-9e19-687f46851f89",
+      "name": "LINKEDIN",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1720,
+        640
+      ],
+      "parameters": {
+        "url": "https://backend.blotato.com/v2/posts",
+        "method": "POST",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 10000
+            }
+          }
+        },
+        "jsonBody": "={\n  \"post\": {\n    \"target\": {\n      \"targetType\": \"linkedin\"\n    },\n    \"content\": {\n      \"text\": \"{{ $('Get Shorts Details').item.json.publication_captions.linkedin }}\",\n      \"platform\": \"linkedin\",\n      \"mediaUrls\": [ \"{{ $json.url }}\" ]\n    },\n    \"accountId\": \"xxxxx\"\n  }\n}\n",
+        "sendBody": true,
+        "specifyBody": "json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "839e996c-8760-4016-ad25-dc857f7f29f9",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        340,
+        -60
+      ],
+      "parameters": {
+        "color": 7,
+        "width": 700,
+        "height": 100,
+        "content": "## Step 2: Analyze Longform"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "a32c7546-ecd2-4ebd-92f6-78ac8e96f04d",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        500,
+        80
+      ],
+      "parameters": {
+        "color": 7,
+        "width": 540,
+        "height": 100,
+        "content": "## Step 3: Produce Shorts"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "91295e32-44d0-4018-b48a-d3167945320e",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        660,
+        220
+      ],
+      "parameters": {
+        "color": 6,
+        "width": 280,
+        "height": 100,
+        "content": "## Step 4: Publish Shorts"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "f2d19187-1dfa-4644-956e-564fd48d5dd4",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        200,
+        -200
+      ],
+      "parameters": {
+        "color": 5,
+        "width": 840,
+        "height": 100,
+        "content": "## Step 1: Get Longform"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "d019d7ae-27b6-4a62-89c2-4cf48f644371",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        1080,
+        -200
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "typeVersion": 1.2
+    },
+    {
+      "id": "7d232159-23c5-413c-bf5f-1a9eb4a50c19",
+      "name": "Analyze Longform",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1080,
+        -60
+      ],
+      "parameters": {
+        "url": "https://api.klap.app/v2/tasks/video-to-shorts",
+        "method": "POST",
+        "options": {},
+        "jsonBody": "={\n  \"source_video_url\": \"{{ $json.longform_links }}\",\n\n  \"language\": \"en\",\n  \"target_clip_count\": 2,\n  \"max_clip_count\": 2,\n\n\n  \"editing_options\": {\n    \"captions\": true,\n    \"reframe\": true,\n    \"emojis\": true,\n    \"remove_silences\": true,\n    \"intro_title\": false\n  },\n\n\n  \"dimensions\": {\n    \"width\": 1080,\n    \"height\": 1920\n  },\n\n\n  \"min_duration\": 15,\n  \"max_duration\": 60,\n  \"target_duration\": 30\n}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "4799b746-5eb1-48df-b5cc-fe2c97a1e67a",
+      "name": "Ready?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1560,
+        -60
+      ],
+      "parameters": {
+        "options": {},
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "20719646-7931-45f3-bb0e-e850d79a5b2d",
+              "operator": {
+                "name": "filter.operator.equals",
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "ready"
+            }
+          ]
+        }
+      },
+      "typeVersion": 2.2
+    },
+    {
+      "id": "8cc7ec1e-3a41-44c3-8408-6b5e4b2214ba",
+      "name": "Ready? 2",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1560,
+        80
+      ],
+      "parameters": {
+        "options": {},
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "20719646-7931-45f3-bb0e-e850d79a5b2d",
+              "operator": {
+                "name": "filter.operator.equals",
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "ready"
+            }
+          ]
+        }
+      },
+      "typeVersion": 2.2
+    },
+    {
+      "id": "e4aec13d-2956-4d69-945f-2861bf0ee6fe",
+      "name": "Log Shorts",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        960,
+        220
+      ],
+      "parameters": {
+        "columns": {
+          "value": {
+            "id": "==ROW()-1",
+            "date_produced": "={{ new Date().toISOString().split('T')[0] }}",
+            "tiktok_caption": "={{ $('Get Shorts Details').item.json.publication_captions.tiktok }}",
+            "shortform_links": "={{ $('Ready? 2').item.json.src_url }}",
+            "youtube_caption": "={{ $('Get Shorts Details').item.json.publication_captions.youtube }}",
+            "linkedin_caption": "={{ $('Get Shorts Details').item.json.publication_captions.linkedin }}",
+            "instagram_caption": "={{ $('Get Shorts Details').item.json.publication_captions.instagram }}",
+            "publishing_status": "for publishing"
+          },
+          "schema": [
+            {
+              "id": "id",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "id",
+              "defaultMatch": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "shortform_links",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "shortform_links",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tiktok_caption",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "tiktok_caption",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "instagram_caption",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "instagram_caption",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "youtube_caption",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "youtube_caption",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "linkedin_caption",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "linkedin_caption",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "publishing_status",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "publishing_status",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "date_produced",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "date_produced",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "id"
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {},
+        "operation": "append",
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": 1447421682,
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/edit",
+          "cachedResultName": "Sheet2"
+        },
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/edit",
+          "cachedResultName": "Clips Sheet"
+        }
+      },
+      "typeVersion": 4.5
+    },
+    {
+      "id": "2df24fc0-b228-4be8-8941-98c87a2b613b",
+      "name": "Load Shorts",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1080,
+        220
+      ],
+      "parameters": {
+        "url": "https://backend.blotato.com/v2/media",
+        "method": "POST",
+        "options": {},
+        "sendBody": true,
+        "authentication": "genericCredentialType",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $json.shortform_links }}"
+            }
+          ]
+        },
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "510df443-c398-424f-abb1-db8207a23a76",
+      "name": "Get Shorts Details",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1720,
+        -60
+      ],
+      "parameters": {
+        "url": "=https://api.klap.app/v2/projects/{{ $json.output_id }}",
+        "options": {},
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "8d89b225-a0ca-4d8d-a488-98ddd86fd940",
+      "name": "Update Longform Status",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        1720,
+        80
+      ],
+      "parameters": {
+        "columns": {
+          "value": {
+            "id": "={{ $('Get Longform').item.json.id }}",
+            "date_produced": "={{ new Date().toISOString().split('T')[0] }}",
+            "production_status": "done"
+          },
+          "schema": [
+            {
+              "id": "id",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "id",
+              "defaultMatch": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "longform_links",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "longform_links",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "production_status",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "production_status",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "date_produced",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "date_produced",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": true,
+              "required": false,
+              "displayName": "row_number",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "id"
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {},
+        "operation": "update",
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/edit#gid=0",
+          "cachedResultName": "Sheet1"
+        },
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/edit?usp=drivesdk",
+          "cachedResultName": "Clips Sheet"
+        }
+      },
+      "executeOnce": false,
+      "typeVersion": 4.5
+    },
+    {
+      "id": "1d956921-f2c4-488b-8354-0d05d2b2b2a2",
+      "name": "Update Shorts Status",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        1720,
+        780
+      ],
+      "parameters": {
+        "columns": {
+          "value": {
+            "date_published": "={{ new Date().toISOString().split('T')[0] }}",
+            "shortform_links": "={{ $('Log Shorts').item.json.shortform_links }}",
+            "publishing_status": "done"
+          },
+          "schema": [
+            {
+              "id": "id",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "id",
+              "defaultMatch": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "shortform_links",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "shortform_links",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tiktok_caption",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "tiktok_caption",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "instagram_caption",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "instagram_caption",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "youtube_caption",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "youtube_caption",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "linkedin_caption",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "linkedin_caption",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "publishing_status",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "publishing_status",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "date_published",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "date_published",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": true,
+              "required": false,
+              "displayName": "row_number",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "shortform_links"
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {},
+        "operation": "update",
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/edit#gid=0",
+          "cachedResultName": "Sheet1"
+        },
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/edit?usp=drivesdk",
+          "cachedResultName": "Clips Sheet"
+        }
+      },
+      "executeOnce": false,
+      "typeVersion": 4.5
+    },
+    {
+      "id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "name": "Wait 2",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        1240,
+        80
+      ],
+      "webhookId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "parameters": {
+        "unit": "minutes"
+      },
+      "typeVersion": 1.1
+    },
+    {
+      "id": "63ff469d-2006-4d9e-89d6-9e03b8e07062",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        180,
+        -300
+      ],
+      "parameters": {
+        "color": 7,
+        "width": 1680,
+        "height": 180,
+        "content": "# AI-POWERED SFV CLIP GENERATOR"
+      },
+      "typeVersion": 1
+    }
+  ],
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ff76781d-d28d-4258-a49c-e37a73abc4f6",
+  "connections": {
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Get Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ready?": {
+      "main": [
+        [
+          {
+            "node": "Get Shorts Details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 2": {
+      "main": [
+        [
+          {
+            "node": "Get Shorts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ready? 2": {
+      "main": [
+        [
+          {
+            "node": "Update Longform Status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Shorts": {
+      "main": [
+        [
+          {
+            "node": "Ready? 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Status": {
+      "main": [
+        [
+          {
+            "node": "Ready?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Shorts": {
+      "main": [
+        [
+          {
+            "node": "Load Shorts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Shorts": {
+      "main": [
+        [
+          {
+            "node": "TIKTOK",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "YOUTUBE",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "INSTAGRAM",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "LINKEDIN",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update Shorts Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Longform": {
+      "main": [
+        [
+          {
+            "node": "Analyze Longform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Export Shorts": {
+      "main": [
+        [
+          {
+            "node": "Wait 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Longform": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Longform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Shorts Details": {
+      "main": [
+        [
+          {
+            "node": "Export Shorts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Longform Status": {
+      "main": [
+        [
+          {
+            "node": "Log Shorts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

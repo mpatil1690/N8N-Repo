@@ -1,0 +1,1542 @@
+{
+  "name": "AI Creatives Factory",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://api.kie.ai/api/v1/jobs/recordInfo",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "taskId",
+              "value": "={{ $('Generate Image').item.json.data.taskId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        528,
+        528
+      ],
+      "id": "349b8144-30d0-4366-87be-e1157516bdab",
+      "name": "Get Status",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "zsMZlackCNGRzHaz",
+          "name": "Header Auth account"
+        },
+        "httpBearerAuth": {
+          "id": "JkscfFxWKucBiypx",
+          "name": "Kie.ai Credentials"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.data.state || $json.data.status.toLowerCase() }}",
+                    "rightValue": "success",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "1c25caf6-dfd8-4467-9fcf-5a25c4fde33d"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "finished"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "504a85ff-58f6-4317-9c40-52923b4b80a6",
+                    "leftValue": "={{ ($json.data.state || $json.data.status).toLowerCase() }}",
+                    "rightValue": "ing",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "in progress"
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "error"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        752,
+        512
+      ],
+      "id": "2e3e99a4-9f59-4ccd-b555-246f66bb31cb",
+      "name": "Switch"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -256,
+        112
+      ],
+      "id": "d72978b5-965f-4c74-acbc-00994c692384",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/jobs/createTask",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"model\": \"nano-banana-pro\",\n    \"input\": {\n      \"prompt\":  {{ JSON.stringify($('Loop Over Items').item.json['Image Prompt']) }},\n      \"image_input\": [\"{{ $('Structure Data').item.json.productImageURL }}\"],\n      \"aspect_ratio\": \"{{ $('Structure Data').item.json.aspectRatio }}\",\n      \"resolution\": \"{{ $('Structure Data').item.json.resolution }}\",\n      \"output_format\": \"png\"\n    }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        48,
+        528
+      ],
+      "id": "c79d19e1-5982-4504-a7b3-d2c890b90a3e",
+      "name": "Generate Image",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JkscfFxWKucBiypx",
+          "name": "Kie.ai Credentials"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 60
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        304,
+        528
+      ],
+      "id": "b24c5285-f08c-41de-9166-a1942140f9c4",
+      "name": "Wait",
+      "webhookId": "32080ca8-164c-406f-8702-d25eb8a99a96"
+    },
+    {
+      "parameters": {
+        "name": "={{ $('Get Inputs').item.json['Product Name'] }}_image",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1PnNN7fDPkxpmaC92pLSyMKaL9yhVf_ON",
+          "mode": "list",
+          "cachedResultName": "Images",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1PnNN7fDPkxpmaC92pLSyMKaL9yhVf_ON"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1424,
+        496
+      ],
+      "id": "257ef87d-e53c-4d8f-8b46-11bd9a16a77d",
+      "name": "Upload Images to Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "TsVSzqmLIqnqeZuf",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.urls[0] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1216,
+        496
+      ],
+      "id": "8c4fbebd-70fe-4c1c-9f8b-b43f0d160bdb",
+      "name": "Get Images Binary"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -240,
+        512
+      ],
+      "id": "d617c0cd-55a1-4478-8c57-cca30b7207e6",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $('Get Status').first().json.data.resultJson;\nconst parsed = JSON.parse(data);\nconst urls = parsed.resultUrls || [];\n\n// Return a single item containing the array of URLs\nreturn [{ json: { urls } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1008,
+        496
+      ],
+      "id": "ff4e1c13-8179-4d2f-b300-9a00bcf9164a",
+      "name": "Get Image URL"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1dXjEMxIeJFSNU1MYsHBm-9Z1aOhs4kvJKJZWnRCGZOo",
+          "mode": "list",
+          "cachedResultName": "Creatives Engine",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dXjEMxIeJFSNU1MYsHBm-9Z1aOhs4kvJKJZWnRCGZOo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dXjEMxIeJFSNU1MYsHBm-9Z1aOhs4kvJKJZWnRCGZOo/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $('Get Inputs').item.json.row_number }}",
+            "Status": "Error"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Product Name",
+              "displayName": "Product Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Product Description",
+              "displayName": "Product Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Product Image URL",
+              "displayName": "Product Image URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Additional Context",
+              "displayName": "Additional Context",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Variations",
+              "displayName": "Variations",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Aspect ratio",
+              "displayName": "Aspect ratio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Image model",
+              "displayName": "Image model",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Output 1",
+              "displayName": "Output 1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Output 2",
+              "displayName": "Output 2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Output 3",
+              "displayName": "Output 3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1008,
+        640
+      ],
+      "id": "2cc9c978-c738-4ce3-b154-0891a18b225e",
+      "name": "Save Error Result",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eGtLMxbhCPLLlu7E",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "text": "=Analyze the provided product image and extract insights useful for **ad creative development**. \nFocus on **visual details, emotional appeal, and marketing potential**. Keep the tone strategic and descriptive.\n**Be concise and clear**\n\n**Provide:**\n\n1. **What it is:** Identify the product type, purpose, and its most defining features or functions.\n2. **Visual elements:** Describe key colors, materials, textures, and design style (e.g., minimalist, premium, sporty). Highlight any distinctive shapes, finishes, or packaging details.\n3. **Target audience:** Describe the most likely buyers — their lifestyle, preferences, and what needs this product fulfills.\n4. **Key selling points:** Explain what makes this product visually and emotionally appealing. Highlight the benefits or differentiators that could drive conversions.\n5. **Ad context suggestions:** Recommend ideal ad settings, tones, or scenarios that would showcase the product best (e.g., lifestyle environment, lighting mood, creative theme).\n\n**Be specific and actionable — think like a creative director preparing a high-impact ad brief.**\n\n**Important: Return only final product description with any explanation or preamble. Be concise, visual, and marketing-focused**",
+        "imageUrls": "={{ $json.productImageURL }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        448,
+        112
+      ],
+      "id": "ee808daa-eca6-4a04-bf83-fb7272d60aad",
+      "name": "Analyze Product Image",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Wx5b5v7ukrWVITW3",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1aUgOvzplL65dfrlH1taC3Cr2k9lAekMf6A7NsohCk0Y",
+          "mode": "list",
+          "cachedResultName": "AI Creatives Engine",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1aUgOvzplL65dfrlH1taC3Cr2k9lAekMf6A7NsohCk0Y/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1aUgOvzplL65dfrlH1taC3Cr2k9lAekMf6A7NsohCk0Y/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Status",
+              "lookupValue": "Create"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -32,
+        112
+      ],
+      "id": "68d75de6-a3cf-47f8-9258-1b80e6298165",
+      "name": "Get Inputs",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eGtLMxbhCPLLlu7E",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "10_808Wdn0rRlg3unXETYKNngTzAHfnIvgBz1TfeNb14",
+          "mode": "list",
+          "cachedResultName": "Ad Creatives",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10_808Wdn0rRlg3unXETYKNngTzAHfnIvgBz1TfeNb14/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10_808Wdn0rRlg3unXETYKNngTzAHfnIvgBz1TfeNb14/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "Generating",
+            "ID": "={{ $('Structure Data').item.json.creativeID }}",
+            "Hook": "={{ $('Split Out').item.json.hook.description }}",
+            "Image Prompt": "={{ $json.text }}",
+            "Product Name": "={{ $('Structure Data').item.json.productName }}",
+            "Varient": "={{ $itemIndex + 1 }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Product Name",
+              "displayName": "Product Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Hook",
+              "displayName": "Hook",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Image Prompt",
+              "displayName": "Image Prompt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Varient",
+              "displayName": "Varient",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Output URL",
+              "displayName": "Output URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1680,
+        176
+      ],
+      "id": "93732417-9ebb-4f09-af2f-350e56e91eca",
+      "name": "Save Creative Variants",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eGtLMxbhCPLLlu7E",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Create a high-converting social media ad image prompt that fuses psychological persuasion with compelling visual storytelling.\n\n### **Product Image Analysis:**\n{{ $('Analyze Product Image').item.json.content.parts[0].text }}\n\n### **Product Description:**\n{{ $('Structure Data').item.json.productDescription }}\n\n### **Target Audience & Offer**\n{{ $('Structure Data').item.json.targetAudience }}\n\n{{ $('Structure Data').item.json.keyMessaging }}\n\n### **Creative Angle**\n{{ $json.hook.description }}\n",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=# **Role**\nYou are a **world-class Creative Director** at a top DTC ad agency responsible for over **$2B in revenue**. You design **scroll-stopping, high-converting ad creatives** that transform ordinary product photos into visually engaging, conversion-optimized social ads.\n\n---\n\n### **Mission**\nUsing the provided **product information**, **product image description**, and **selected ad angle**, craft **ONE concise and visually specific image editing prompt** that tells an AI exactly how to create a **fully designed ad creative** — not a plain product photo.\n\n**All design decisions must follow the chosen ad angle.**\nIf the angle mentions pain points, contrast, human touch, hands, models, natural backgrounds, specific visual motifs, or particular callouts — you must integrate them.\n\n---\n\n### **Creative DNA**\n**Core Ad Elements:**\n* **Bold headline** at the top expressing the key benefit or transformation (30–40% visual weight).\n* **2–3 callouts** related to the angle’s benefits, integrated visually with connecting arrows, highlight circles, or icon bubbles.\n  ➤ **Maintain high contrast so callouts and arrows remain fully visible.**\n* **Brand logo** placed cleanly in a corner *if consistent with the angle*.\n* **CTA button** at the bottom (e.g., “SHOP NOW,” “TRY TODAY”) *if the angle supports a direct-response feel*.\n* **Social proof element** (rating or short testimonial) *only if the angle leverages credibility, trust, or proof*.\n* Optional **background effects** aligned with the angle’s emotional tone (e.g., glow, hydration drops, freshness, natural environment).\n\n---\n\n### **Human or Environmental Elements (Angle-Dependent)**\nInclude only when the angle suggests or benefits from it:\n* a **hand interacting with the product**\n* a **model using/wearing the product**\n* **partial body shots**\n* **natural lifestyle backgrounds**\n* **environmental storytelling** tied to the product’s promise\n\nIf the ad angle supports realism, relatability, application, or lifestyle context — integrate these naturally.\n\n---\n\n### **Visual & Design Style**\n* Follow the mood, color palette, and emotional direction implied by the ad angle.\n* Keep typography bold and legible with strong contrast.\n* Use gradients, soft tones, or minimalistic layouts only when they match the angle.\n* Maintain balance, clarity, and hierarchy to keep the ad conversion-focused.\n\n---\n\n### **Output Format**\nProvide **one short paragraph (3–4 sentences)** describing exactly how to redesign the image according to the selected ad angle.\n\nInclude:\n* The **headline copy** + placement + **text color**\n* The **2–3 angle-specific callouts** + visual cue style + positioning + **text color**\n* The **testimonial or rating** only if the angle relies on trust\n* The **CTA** only if the angle calls for direct response (button color + text color)\n* Any **human or natural elements** explicitly supported by the angle\n* A final note on the **overall visual feel** driven by the angle\n\n---\n\n### **Example Output (Angle: \"Clarity & Focus\")**\n> Design a clean, high-impact creative aligned with the “Clarity & Focus” angle using the headline “BRAIN FOG → LASER FOCUS” at the top in bold white text with a slight shadow for contrast. Add three white circular callouts with thin high-contrast arrows pointing to the product: “500mg Clinically Proven,” “120mg Natural Caffeine,” and “Zero Sugar,” each in dark navy text. Place a 4.9-star rating beneath the product for credibility, the logo in the top-left, and a bright yellow “SHOP NOW” button with black text centered at the bottom. Use a sharp blue-purple gradient background with soft glows to reinforce the clarity and focus theme.\n"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1296,
+        112
+      ],
+      "id": "52de8eb2-946c-4d38-8ae8-620c6d4d7916",
+      "name": "Generate Images Prompt"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"hooks\": [\n    {\n      \"description\": \"Description of the hook and elements of the creative\"\n    }\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        832,
+        288
+      ],
+      "id": "33a2de27-6c51-4b29-a1dc-6c9dc0908ad7",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate {{ $('Structure Data').item.json.variations }} psychologically-engineered hooks using the following conversion-optimized frameworks:\n\n## Ad Campaign Context\n\n### **Product Information:**\n- Product Name: {{ $('Structure Data').item.json.productName }}\n- Campaign Type: {{ $('Structure Data').item.json.adType }}\n- Product Description: \n{{ $('Structure Data').item.json.productDescription }}\n- Target Audience:\n{{ $('Structure Data').item.json.targetAudience }}\n- Key Messaging/offer:\n{{ $('Structure Data').item.json.keyMessaging }}\n\n### **Product Visual Analysis:**\n{{ $('Analyze Product Image').item.json.content.parts[0].text }}\n",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=# **Role:**\nYou are a **Senior Performance Creative Strategist** at a top paid media agency. Your job is to turn product insights into **high-converting ad angles** that directly drive revenue.\n\n# **Goal:**\nTake the output of the Visual Analysis Agent and transform it into **persuasive, conversion-driven ad angles** that:\n* speak directly to real customer pain points\n* communicate a clear emotional or functional transformation\n* guide designers on exactly what to include visually for maximum impact\n* generate ideas that can be turned into winning ads across Meta\n\n# **Instructions:**\nUsing the insights provided from the previous agent, generate **{{ $('Structure Data').item.json.variations }} strong ad angles**.\n\nFor **each angle**, provide:\n\n### **1. Angle Name (short + punchy)**\n\n### **2. Angle Description**\n* concise, emotionally persuasive\n* built around a real customer pain point and the transformation they want\n* grounded in the product details and visual cues\n\n### **3. Why It Works**\n* identify the psychological trigger (relief, simplicity, trust, speed, status, proof, FOMO, etc.)\n\n### **4. Recommended Visual Elements**\nProvide **specific, actionable instructions**, aligned with both the angle and the Guidelines above:\n* natural human elements (hands, model, body crop)\n* layout choice (before/after, split screen, hero, lifestyle, etc.)\n* callouts, arrows, highlight circles, badges, feature labels\n* CTA recommendation (only when appropriate)\n* social proof recommendation (only when appropriate)\n* product zoom-ins, textures, contrasts, color highlights\n* emotional or contextual visual cues\n\n### **5. Suggested On-Image Text**\n* 3–6 words\n* crystal-clear benefit\n\n# **Guidelines (Important)**\n### **Callouts**\n* Callouts must use **highly relevant, customer-verbatim language** — phrasing that reflects real reviews, objections, desires, or phrases customers naturally use.\n* Avoid generic claims; focus on **clear, behavior-shifting micro-benefits**.\n* Callouts should always be **specific**, not fluffy (ex: “Stops flakes in 48h” instead of “Very effective”).\n* Visual style must be **clean, legible, and high-contrast**.\n\n### **Text & Headlines**\n* All text should deliver a **crystal-clear benefit** with no fluff.\n* Prioritize transformations customers deeply care about (pain → outcome).\n* If the angle suggests urgency, clarity, simplicity, or proof — reflect that tone in the headline.\n\n### **Natural / Human Elements**\n* Include hands, partial body shots, or a model **only if the product category or angle benefits from showing usage, scale, texture, fit, or realism**.\n* Human presence must feel **natural, trustworthy, and context-appropriate**.\n\n### **Layout**\n* Choose layout based on the angle’s logic:\n  * **Before/after** → transformation angles\n  * **Split screen** → comparison or “old way vs new way” angles\n  * **Hero close-up** → premium, quality-focused angles\n  * **Lifestyle** → comfort, confidence, or real-life use angles\n\n### **Conversion Boosters**\n* Use arrows, badges, circles, or discount tags only when they **reinforce clarity or add useful meaning**, not decoration.\n* Must enhance comprehension, not clutter.\n\n### **CTA**\n* Recommend a CTA button **only when the angle follows a direct-response logic** (e.g., urgency, savings, fast result, routine upgrade).\n* CTA must be short, action-oriented, and high-contrast.\n\n### **Social Proof**\n* Recommend ratings or testimonials only for angles built on **trust, credibility, authority, or risk-reduction**.\n* Should be authentic, minimal, and visually digestible.\n\n### **Emotional & Contextual Cues**\n* Ensure visuals reflect the emotional tone of the angle: relief, freshness, comfort, precision, energy, calm, etc.\n* Use color, lighting, and environment to support the message, not distract.\n\n# **Output Format:**\n* No preamble, no explanations — only the final clear and concise angle descriptions."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        688,
+        112
+      ],
+      "id": "c844af00-a6ef-498c-b594-994d5716bc5b",
+      "name": "Angles Generator Expert"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n    \"row_number\": {{ $json.row_number }},\n    \"productName\": \"{{ $json['Product Name'] }}\",\n    \"productDescription\": \"{{ $json['Product Description'] }}\",\n    \"productImageURL\": \"{{ $json['Product Image URL'] }}\",\n    \"targetAudience\": \"{{ $json['Target Audience'] }}\",\n    \"keyMessaging\": \"{{ $json['Key Messaging/Offer'] }}\",\n    \"adType\": \"{{ $json['Ad Type'] }}\",\n    \"variations\": {{ $json.Variations }},\n    \"aspectRatio\": \"{{ $json['Aspect ratio'] }}\",\n    \"resolution\": \"{{ $json.Resolution }}\",\n    \"creativeID\": {{ $execution.id + $itemIndex }},\n    \"status\": \"{{ $json.Status }}\"\n}\n ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        192,
+        112
+      ],
+      "id": "ca45b591-0432-40fb-8aed-b3435dd4b0b2",
+      "name": "Structure Data"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3-pro-preview",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        992,
+        320
+      ],
+      "id": "9290bb94-e2c1-466b-b12a-d237e47f2040",
+      "name": "Gemini 3",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Wx5b5v7ukrWVITW3",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "your_email@example.com",
+        "subject": "N8N - Creatives Ready",
+        "message": "=<!DOCTYPE html>\n<html>\n  <body>\n    <div style=\"font-family: Arial, sans-serif; color: #111; max-width: 600px; margin: 0 auto; padding: 20px;\">\n      <h2>Your creatives are ready 🎨</h2>\n      <p>Hi,</p>\n      <p>Your ad creatives have been generated. You can view all variations and assets in the results sheet linked below:</p>\n      <p>\n        <a href=\"https://docs.google.com/spreadsheets/d/10_808Wdn0rRlg3unXETYKNngTzAHfnIvgBz1TfeNb14\" target=\"_blank\" style=\"color: #1a73e8;\">View creatives</a>\n      </p>\n\n      <p>Next steps:</p>\n      <ul>\n        <li>Review the creative concepts and copy variations.</li>\n        <li>Pick top variations to run in A/B tests.</li>\n      </ul>\n\n      <p>Cheers!</p>\n    </div>\n  </body>\n</html>\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        256,
+        368
+      ],
+      "id": "42522597-230c-43e6-916b-bf5aa9cb42ae",
+      "name": "Notify Finished",
+      "webhookId": "e3505f14-7bd6-4648-b584-a8609b3a7118",
+      "executeOnce": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "BydPNQUEzMHFYMP8",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1aUgOvzplL65dfrlH1taC3Cr2k9lAekMf6A7NsohCk0Y",
+          "mode": "list",
+          "cachedResultName": "AI Creatives Engine",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1aUgOvzplL65dfrlH1taC3Cr2k9lAekMf6A7NsohCk0Y/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1aUgOvzplL65dfrlH1taC3Cr2k9lAekMf6A7NsohCk0Y/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Creatives ID": "={{ $('Save Creative Variants').item.json.ID }}",
+            "Status": "Done"
+          },
+          "matchingColumns": [
+            "Creatives ID"
+          ],
+          "schema": [
+            {
+              "id": "Product Name",
+              "displayName": "Product Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Product Description",
+              "displayName": "Product Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Product Image URL",
+              "displayName": "Product Image URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Target Audience",
+              "displayName": "Target Audience",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Key Messaging/Offer",
+              "displayName": "Key Messaging/Offer",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Ad Type",
+              "displayName": "Ad Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Variations",
+              "displayName": "Variations",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Aspect ratio",
+              "displayName": "Aspect ratio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Resolution",
+              "displayName": "Resolution",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Creatives ID",
+              "displayName": "Creatives ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        48,
+        368
+      ],
+      "id": "62ae9c36-5f82-43af-bf90-2c57c8c5e3ad",
+      "name": "Update Status: Done",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eGtLMxbhCPLLlu7E",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1aUgOvzplL65dfrlH1taC3Cr2k9lAekMf6A7NsohCk0Y",
+          "mode": "list",
+          "cachedResultName": "AI Creatives Engine",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1aUgOvzplL65dfrlH1taC3Cr2k9lAekMf6A7NsohCk0Y/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1aUgOvzplL65dfrlH1taC3Cr2k9lAekMf6A7NsohCk0Y/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Creatives ID": "={{ $('Structure Data').item.json.creativeID }}",
+            "Status": "Generating",
+            "row_number": "={{ $('Structure Data').item.json.row_number }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Product Name",
+              "displayName": "Product Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Product Description",
+              "displayName": "Product Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Product Image URL",
+              "displayName": "Product Image URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Target Audience",
+              "displayName": "Target Audience",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Key Messaging/Offer",
+              "displayName": "Key Messaging/Offer",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Ad Type",
+              "displayName": "Ad Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Variations",
+              "displayName": "Variations",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Aspect ratio",
+              "displayName": "Aspect ratio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Creatives ID",
+              "displayName": "Creatives ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1680,
+        0
+      ],
+      "id": "a60851d7-a4d9-468c-b3f4-56e88858a5ec",
+      "name": "Update Status: Generating",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eGtLMxbhCPLLlu7E",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "10_808Wdn0rRlg3unXETYKNngTzAHfnIvgBz1TfeNb14",
+          "mode": "list",
+          "cachedResultName": "Ad Creatives",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10_808Wdn0rRlg3unXETYKNngTzAHfnIvgBz1TfeNb14/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10_808Wdn0rRlg3unXETYKNngTzAHfnIvgBz1TfeNb14/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": 0,
+            "Hook": "={{ $('Loop Over Items').item.json.Hook }}",
+            "Status": "Done",
+            "Output URL": "={{ $('Get Image URL').item.json.urls[0] }}"
+          },
+          "matchingColumns": [
+            "Hook"
+          ],
+          "schema": [
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Product Name",
+              "displayName": "Product Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Hook",
+              "displayName": "Hook",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Image Prompt",
+              "displayName": "Image Prompt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Varient",
+              "displayName": "Varient",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Output URL",
+              "displayName": "Output URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1664,
+        672
+      ],
+      "id": "4d012a96-151e-4aaf-bff7-2079a0705184",
+      "name": "Save Creatives Results",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eGtLMxbhCPLLlu7E",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output.hooks",
+        "options": {
+          "destinationFieldName": "hook"
+        }
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1056,
+        112
+      ],
+      "id": "06eed9f3-330d-4ca9-8e39-2f0552e2808d",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1aUgOvzplL65dfrlH1taC3Cr2k9lAekMf6A7NsohCk0Y",
+          "mode": "list",
+          "cachedResultName": "AI Creatives Engine",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1aUgOvzplL65dfrlH1taC3Cr2k9lAekMf6A7NsohCk0Y/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1aUgOvzplL65dfrlH1taC3Cr2k9lAekMf6A7NsohCk0Y/edit#gid=0"
+        },
+        "options": {
+          "columnsToWatch": [
+            "Status"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        -64
+      ],
+      "id": "2cdb5d66-45cb-4090-b4f6-483d5fd28a12",
+      "name": "Get Pending Creatives",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "MfgV0UqP5c1SMOwY",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# ⚡ AI Ad Creative Factory\n### *Automate your entire ad creation pipeline — from product images to AI-generated marketing angles and production-ready ad creatives saved directly to your Drive.*\n\n## 🧩 System Overview\n### 1. **Add Product Details:** Enter product name, description, target audience, your key messaging, desired ration & resolution, and public image URL in your Google Sheet.\n### 2. **Set Status to \"Create\":** Trigger the workflow by updating the status column.\n### 3. **Analyzes Image:** AI examines your product and extract all relevant visual elements\n### 4. **Gemini 3 Creative Director Generates Marketing Angles:** Creates strategic marketing angles optimized for each product and target audience.\n### 5. **Prompt Architect Crafts Image Prompts:** Takes each marketing angle and creates specialized image prompts optimized with Gemini 3  for Nanobanana 2 generation.\n### 6. **Generate Ad Images:** Nanobanana 2 from Kie.ai produces production-ready ad creatives based on the optimized prompts.\n### 7. **Save & Organize Results:** All variants are saved to Google Drive and logged back to your tracking sheets.\n### 8. **Email Notification:** Receive a confirmation email when your ad creatives are ready.\n\n## 🔑 APIs & Tools Used\n### * **Kie.ai API** – For Nanobanana 2 image generation\n### * **Google Gemini API** – For Creative Director and Prompt Architect agents\n\n## 💰 Basic Cost Estimation (per ad variant)\n- **Nanobanana 2 generation:** $0.12 per image (price expected to drop)\n- **Gemini processing:** <$0.05 per ad\n- **Total estimated cost:** **~$0.17 per ad creative**",
+        "height": 784,
+        "width": 848,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1280,
+        -176
+      ],
+      "id": "3a0f2c45-7016-44ca-b06c-c757746f6850",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "# 🚀 Quick Setup Guide\n\n### **1. Configure Google Nodes (Sheets, Drive, Gmail)**\n### Connect your Google account in n8n so the workflow can read your sheets, save files to Drive, and send email notifications.\n### **2. Copy Both Sheet Templates**\n### - **Main AI Creatives Engine Sheet:** [Copy Template](https://docs.google.com/spreadsheets/d/1aUgOvzplL65dfrlH1taC3Cr2k9lAekMf6A7NsohCk0Y)\n### *This is where you enter your creative details and manage everything.*\n### - **Ad Creatives Results Sheet:** [Copy Template](https://docs.google.com/spreadsheets/d/10_808Wdn0rRlg3unXETYKNngTzAHfnIvgBz1TfeNb14)\n### *This is where all creative variants are logged. Each product has its own ID, which you can reference in the results sheet.*\n### **3. Create a Google Drive Folder**\n### Create a dedicated folder in your Google Drive where all generated ad creatives will be saved. Copy the folder ID from the URL.\n### **4. Get Your API Keys**\n### - **Kie.ai API:** Sign up at [Kie.ai](https://kie.ai) and get your API key for Nanobanana 2 image generation.\n### - **Google Gemini API:** Create an API key from [Google AI Studio](https://aistudio.google.com/) for the AI agents.\n### **5. Add Your Email Address in Gmail Node**\n### Configure the Gmail node with your email address to receive notifications when ad creatives are completed.\n",
+        "height": 608,
+        "width": 848
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1280,
+        640
+      ],
+      "id": "d1591ae7-1ac8-438a-b882-f697ec79259d",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get Status": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Get Image URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save Error Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get Inputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Image": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Get Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Images to Drive": {
+      "main": [
+        [
+          {
+            "node": "Save Creatives Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Images Binary": {
+      "main": [
+        [
+          {
+            "node": "Upload Images to Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Update Status: Done",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Image URL": {
+      "main": [
+        [
+          {
+            "node": "Get Images Binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Error Result": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Product Image": {
+      "main": [
+        [
+          {
+            "node": "Angles Generator Expert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Inputs": {
+      "main": [
+        [
+          {
+            "node": "Structure Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Creative Variants": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Images Prompt": {
+      "main": [
+        [
+          {
+            "node": "Save Creative Variants",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update Status: Generating",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Angles Generator Expert",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Angles Generator Expert": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structure Data": {
+      "main": [
+        [
+          {
+            "node": "Analyze Product Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini 3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Angles Generator Expert",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Generate Images Prompt",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status: Done": {
+      "main": [
+        [
+          {
+            "node": "Notify Finished",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Creatives Results": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Generate Images Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Pending Creatives": {
+      "main": [
+        [
+          {
+            "node": "Structure Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e5e9b4ec-7d62-4d1d-9e67-48b9b35508e0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "bef8bc55f42cadcb78c8df2565173dd0fa1be009ca38dc8a473f4672f2fa1789"
+  },
+  "id": "ZcLrRfYnCZPBL4Ip",
+  "tags": []
+}

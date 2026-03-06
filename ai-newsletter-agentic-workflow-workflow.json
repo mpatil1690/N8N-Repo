@@ -1,0 +1,650 @@
+{
+  "id": "qfkCmyDC6wtME7sL",
+  "meta": {
+    "instanceId": "95e5a8c2e51c83e33b232ea792bbe3f063c094c33d9806a5565cb31759e1ad39",
+    "templateCredsSetupCompleted": true
+  },
+  "name": "AI Researched Newsletter Workflow",
+  "tags": [],
+  "nodes": [
+    {
+      "id": "f3a6cbf9-0286-4cc0-b6e1-1e4a07e51fcf",
+      "name": "On form submission",
+      "type": "n8n-nodes-base.formTrigger",
+      "position": [
+        -1240,
+        260
+      ],
+      "webhookId": "4f9e114e-fb68-404a-9fd5-2b3310e061fd",
+      "parameters": {
+        "options": {},
+        "formTitle": "Newsletter Submission Form",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Topic",
+              "placeholder": "Voice AI",
+              "requiredField": true
+            },
+            {
+              "fieldType": "dropdown",
+              "fieldLabel": "Tone",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Professional"
+                  },
+                  {
+                    "option": "Funny"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Target Audience",
+              "placeholder": "xxxxx",
+              "requiredField": true
+            }
+          ]
+        },
+        "formDescription": "Provides a structured newsletter based on the following fields."
+      },
+      "typeVersion": 2.2
+    },
+    {
+      "id": "eef0a1d1-23af-42af-800b-808bb8c09b6d",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        -1080,
+        500
+      ],
+      "parameters": {
+        "options": {}
+      },
+      "typeVersion": 1.1
+    },
+    {
+      "id": "65dbce9f-5ca9-4879-9510-864b55a819c6",
+      "name": "Newsletter Expert",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        -1080,
+        260
+      ],
+      "parameters": {
+        "text": "=Newsletter Topic: {{ $json.Topic }}\nNewsletter Tone: {{ $json.Tone }}\nNewsletter Target Audience: {{ $json['Target Audience'] }}",
+        "options": {
+          "systemMessage": "=# Overview  \nYou are an AI agent responsible for planning the sections of a newsletter by creating an engaging table of contents tailored to the newsletter's topic, tone, and target audience.  \n\n## Context  \n- The newsletter will vary in topic, tone, and target audience depending on the request.  \n- Your role is to use the \"tavily\" tool to search for relevant topics and craft a high-level, engaging table of contents.  \n- The table of contents should resonate with the target audience and encourage them to read the full newsletter.  \n\n## Instructions  \n1. Analyze the incoming information, including the newsletter topic, tone, and target audience details.  \n2. Use the \"tavily\" tool to research relevant and trending subtopics related to the main newsletter topic.  \n3. Based on your findings, create a table of contents with high-level, engaging topics tailored to the target audience.  \n4. Ensure the topics align with the newsletter's tone and are structured to maintain the reader's interest.  \n5. Include brief descriptions for each section if requested.  \n\n## Tools  \n- tavily tool for internet research  \n- Predefined audience profiles (if provided)  \n\n## Examples  \n- **Input:**  \n  - Topic: \"Sustainable Living\"  \n  - Tone: Informative yet approachable  \n  - Target Audience: Young adults interested in eco-friendly lifestyles  \n\n- **Output:**  \n  Table of Contents:  \n  1. \"What is Sustainable Living? A Beginner’s Guide\"  \n  2. \"Top 10 Small Changes for a Big Impact\"  \n  3. \"The Science Behind Sustainability: Why It Matters\"  \n  4. \"Spotlight on Innovations: Green Tech of 2025\"  \n  5. \"Inspiration Corner: Stories of Everyday Eco-Warriors\"  \n\n- **Input:**  \n  - Topic: \"Remote Work Tips\"  \n  - Tone: Professional yet motivational  \n  - Target Audience: Corporate professionals transitioning to remote work  \n\n- **Output:**  \n  Table of Contents:  \n  1. \"Remote Work Revolution: Adapting to the New Norm\"  \n  2. \"Home Office Hacks for Maximum Productivity\"  \n  3. \"Balancing Act: Work-Life Harmony Tips\"  \n  4. \"Top Collaboration Tools Every Remote Team Needs\"  \n  5. \"Success Stories: How Remote Work Changed Lives\"  \n\n## SOP (Standard Operating Procedure)  \n1. Review the provided details about the newsletter's topic, tone, and target audience.  \n2. Use the \"tavily\" tool to search for trending, relevant, and engaging subtopics.  \n3. Brainstorm 4-6 high-level topics that fit within the theme of the newsletter and appeal to the target audience.  \n4. Verify that each section aligns with the tone and goals of the newsletter.  \n5. Finalize the table of contents and, if requested, provide brief descriptions for each section.  \n\n## Final Notes  \n- Keep the topics concise and engaging to maximize interest.  \n- Adapt your tone and choice of topics to suit the specific audience profile.  \n- Always aim for a balance of informative and engaging content to maintain readership.  \n---  \nHere is the current date {{ $now }}"
+        },
+        "promptType": "define",
+        "hasOutputParser": true
+      },
+      "typeVersion": 1.7
+    },
+    {
+      "id": "516d0123-ecb8-4a13-90d3-108413b94cf1",
+      "name": "Project Planner",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "position": [
+        -740,
+        260
+      ],
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "options": {},
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=Your job is to split out the table of contents into an individual item for each section. Output each section separately in a field called \"newsletterSections\". When doing so, keep in mind that the newsletter target audience is {{ $('On form submission').item.json['Target Audience'] }} and the tone of the newsletter should be {{ $('On form submission').item.json.Tone }}\n\nHere is the table of contents: {{ $json.output }}\n\n"
+            }
+          ]
+        },
+        "jsonOutput": true
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "xxxxxxxxxxxxxxxx",
+          "name": "xxxxx"
+        }
+      },
+      "typeVersion": 1.8
+    },
+    {
+      "id": "1054af7b-756d-4104-8e1f-cbdbd66077fb",
+      "name": "Split Out",
+      "type": "n8n-nodes-base.splitOut",
+      "position": [
+        -420,
+        260
+      ],
+      "parameters": {
+        "options": {},
+        "fieldToSplitOut": " message.content.newsletterSections"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "7b612f9e-a604-4b56-8d57-c48c2589dfff",
+      "name": "Research Team",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        -180,
+        160
+      ],
+      "parameters": {
+        "text": "=Section Title: {{ $('Split Out').item.json.title }}\n\nSection Description: {{ $('Split Out').item.json.description }}\n\nNewsletter Target Audience: {{ $('On form submission').item.json['Target Audience'] }}\n\nNewsletter Tone: {{ $('On form submission').item.json.Tone }}",
+        "options": {
+          "systemMessage": "=# Overview  \nYou are an AI agent responsible for delivering only the final content for a newsletter section. Your role is to produce concise, well-researched, and audience-tailored content based solely on the provided inputs, with no prefacing statements or explanations.  \n\n## Context  \n- All necessary details, including the section title, description, target audience, and tone, will be provided.  \n- The goal is to create engaging content that aligns with the audience's expectations and the newsletter's objectives.  \n- Content must be supported by research, with sources clearly cited using hyperlinks.  \n\n## Instructions  \n1. Write the final content without including any introductory or concluding remarks about the writing process.  \n2. Conduct research using the tavily tool to ensure credibility and relevance.  \n3. Use the provided inputs to craft a focused section tailored to the target audience.  \n4. Include citations seamlessly within the content using hyperlinks to the original sources.  \n\n## Tools  \n- tavily (for research and citations). \n\n## Citation Guidelines\n- Use the tavily tool to gather information and cite sources\n- For each major claim or piece of information, include a hyperlinked inline citation\n- Format citations as HTML links with descriptive text:\n  <a href=\"[URL]\">[Source: Publication Name]</a>\n- When directly quoting from a source, use quotation marks and include the citation\n\n## Examples  \n- **Input**:  \n  - Section Title: \"The Psychology of Happy Patients\"  \n  - Description: Discuss strategies dental offices can use to improve patient experiences and satisfaction, such as personalized care and stress-reducing techniques.  \n  - Target Audience: Dentists and dental practice managers.  \n  - Tone: Informative yet approachable.  \n- **Output**:  \n  \"Creating a positive patient experience starts with understanding the key drivers of satisfaction in dental care. Personalized care, such as addressing individual patient concerns and tailoring treatments, can significantly boost trust and comfort [Source](https://example.com/personalized-care). Stress-reducing techniques, like offering noise-canceling headphones or aromatherapy in waiting rooms, have also been shown to alleviate anxiety and improve overall impressions of care [Source](https://example.com/stress-reduction). By focusing on these elements, dental practices can foster happier, more loyal patients.\"  \n\n## SOP (Standard Operating Procedure)  \n1. **Input Analysis**: Understand the section's title, description, target audience, and tone.  \n2. **Research**: Use the tavily tool to gather relevant, credible information.  \n3. **Content Writing**: Craft a section based on the provided inputs, ensuring it is directly usable in the newsletter.  \n4. **Cite Sources**: Integrate hyperlinks to all references within the content.  \n5. **Review and Deliver**: Proofread the content to ensure clarity, accuracy, and alignment with the target audience.  \n\n## Final Notes  \n- The output must start directly with the content, without introductory or transitional phrases.  \n- All sources must be clearly cited and integrated naturally into the text.  \n- Focus on delivering value and ensuring readability for the target audience.  \n---  \n"
+        },
+        "promptType": "define"
+      },
+      "typeVersion": 1.7
+    },
+    {
+      "id": "c9b85235-0aee-4fb2-93cb-b8dd88686ef5",
+      "name": "Anthropic Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "position": [
+        40,
+        500
+      ],
+      "parameters": {
+        "options": {}
+      },
+      "credentials": {
+        "anthropicApi": {
+          "id": "xxxxxxxxxxxxxxxx",
+          "name": "xxxxx"
+        }
+      },
+      "typeVersion": 1.2
+    },
+    {
+      "id": "66aedfd5-13fe-4ab8-84c2-c01481d878c8",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        180,
+        240
+      ],
+      "parameters": {
+        "mode": "combine",
+        "options": {},
+        "combineBy": "combineByPosition"
+      },
+      "typeVersion": 3
+    },
+    {
+      "id": "34d7482c-57f6-49fd-b954-640fe279651b",
+      "name": "Aggregate",
+      "type": "n8n-nodes-base.aggregate",
+      "position": [
+        360,
+        240
+      ],
+      "parameters": {
+        "options": {
+          "mergeLists": true
+        },
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "title"
+            },
+            {
+              "fieldToAggregate": "output"
+            }
+          ]
+        }
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "c9fde6fe-d1a1-4299-a482-707cff872b5a",
+      "name": "Editor",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        520,
+        240
+      ],
+      "parameters": {
+        "text": "=List of titles: {{ $json.title }}\nList of article content: {{ $json.output }}",
+        "options": {
+          "systemMessage": "=## Overview\nYou are an expert editor specializing in creating and refining content to output a high quality, formatted article. You are given a list of titles and outputs and you will use these to create a newsletter tailored towards the defined target audience. Create a section in the article for each title, with a hyperlinked source in each section based on the content.\n\n## Objective\n1. Create content for each title using the provided content\n2. Each section should contain inline citations *Don't leave any out*\n3. Improve the flow of the newsletter and format it for readability\n\n## Citation Management\n1. Preserve all inline citations\n2. Standardize citation format\n3. Ensure citations don't disrupt the flow of reading\n\n## Source Section\n1. Create ONE \"Sources\" section at the end of the newsletter\n2. Format each source entry consistently: \n   <li><a href=\"[URL]\">[Publication Name] - [Article Title]</a></li>\n3. Include complete URL for each source\n4. Organize all sources alphabetically\n5. Verify all links are functional\n\n## Output Format\nThe newsletter should be structured as HTML that will be sent through email:\n- Do not output a title or an introduction, the output should start with the first article heading\n- Main content with hyperlink citations in each section.\n- Headers for each section of the article\n- Sources section at the end with all links\n\n## Important ##\nOutput 1000 words maximum or else the automation breaks!\n\nToday's date is {{ $now }}"
+        },
+        "promptType": "define"
+      },
+      "typeVersion": 1.7
+    },
+    {
+      "id": "d0c3b7be-dd3d-47ef-a54f-945d7ca6758d",
+      "name": "Create TItle",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "position": [
+        860,
+        240
+      ],
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "options": {},
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=Create a title for the incoming newsletter. The tone of the newsletter is {{ $('On form submission').item.json.Tone }} and the target audience is {{ $('On form submission').item.json['Target Audience'] }}.\n\nHere is the newsletter:\n{{ $json.output }}\n\n# Output format\nOutput the title in plain text, no quotation marks, and capitalize the first letter of each word.\nExample: Is Artificial Intelligence A Friend Or Foe?"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "xxxxxxxxxxxxxxxx",
+          "name": "xxxxx"
+        }
+      },
+      "typeVersion": 1.8
+    },
+    {
+      "id": "7851ebe2-d9c7-4bc7-a9b2-96dac5465096",
+      "name": "tavily",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "position": [
+        -200,
+        500
+      ],
+      "parameters": {
+        "name": "tavily",
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "0Kc1NijwnVGUQOUB",
+          "cachedResultName": "Tavily Tool"
+        },
+        "description": "Call this tool to search the internet\n",
+        "workflowInputs": {
+          "value": {},
+          "schema": [],
+          "mappingMode": "defineBelow",
+          "matchingColumns": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "fb65af78-54e2-4526-9a96-fc0493048edd",
+      "name": "Workflow Input Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        -300,
+        920
+      ],
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "typeVersion": 1.1
+    },
+    {
+      "id": "5c9aebb9-0649-4d45-b2ab-73c46de976cc",
+      "name": "Tavily",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -80,
+        920
+      ],
+      "parameters": {
+        "url": "https://api.tavily.com/search",
+        "method": "POST",
+        "options": {},
+        "jsonBody": "={\n    \"api_key\": \"YOUR API KEY\",\n    \"query\": \"{{ $json.query.replace(/\"/g, '\\\\\"') }}\",\n    \"search_depth\": \"basic\",\n    \"include_answer\": true,\n    \"topic\": \"news\",\n    \"include_raw_content\": true,\n    \"max_results\": 3\n} ",
+        "sendBody": true,
+        "specifyBody": "json"
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "0a19d0a0-507f-4a8c-b79b-adac5ff16a80",
+      "name": "response",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        160,
+        920
+      ],
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1ae0dd90-d1d0-494b-bd8b-1ef335f0bd8f",
+              "name": "response",
+              "type": "string",
+              "value": "=[Source 1]\nURL: {{ $json.results[0].url }}\nContent: {{ $json.results[0].content }}\n\n[Source 2]\nURL: {{ $json.results[1].url }}\nContent: {{ $json.results[1].content }}\n\n[Source 2]\nURL: {{ $json.results[2].url }}\nContent: {{ $json.results[2].content }}"
+            }
+          ]
+        }
+      },
+      "typeVersion": 3.4
+    },
+    {
+      "id": "464675f3-02e2-49d6-8a01-1490a68ae55e",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1340,
+        20
+      ],
+      "parameters": {
+        "color": 5,
+        "width": 2840,
+        "height": 740,
+        "content": "# Researched Newsletter Workflow"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "9e31f2df-ca0f-4c0a-bd05-a666a99f9206",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -360,
+        840
+      ],
+      "parameters": {
+        "color": 4,
+        "width": 700,
+        "height": 300,
+        "content": "# Tavily Tool"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "b51507ac-902f-4820-8f26-e2c51b0e2d77",
+      "name": "Save Newsletter As Draft",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        1180,
+        240
+      ],
+      "webhookId": "1c988659-2d0a-4471-a1c9-331dccdde458",
+      "parameters": {
+        "message": "={{ $('Editor').item.json.output }}",
+        "options": {},
+        "subject": "={{ $json.message.content }}",
+        "resource": "draft"
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "xxxxxxxxxxxxxxxx",
+          "name": "x@x.x"
+        }
+      },
+      "typeVersion": 2.1
+    },
+    {
+      "id": "272dc54d-0d54-4f18-b4bd-5d29ee7902bc",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1520,
+        1260
+      ],
+      "parameters": {
+        "width": 660,
+        "height": 1680,
+        "content": "## Newsletter Agent Prompt\n\n# Overview  \nYou are an AI agent responsible for planning the sections of a newsletter by creating an engaging table of contents tailored to the newsletter's topic, tone, and target audience.  \n\n## Context  \n- The newsletter will vary in topic, tone, and target audience depending on the request.  \n- Your role is to use the \"tavily\" tool to search for relevant topics and craft a high-level, engaging table of contents.  \n- The table of contents should resonate with the target audience and encourage them to read the full newsletter.  \n\n## Instructions  \n1. Analyze the incoming information, including the newsletter topic, tone, and target audience details.  \n2. Use the \"tavily\" tool to research relevant and trending subtopics related to the main newsletter topic.  \n3. Based on your findings, create a table of contents with high-level, engaging topics tailored to the target audience.  \n4. Ensure the topics align with the newsletter's tone and are structured to maintain the reader's interest.  \n5. Include brief descriptions for each section if requested.  \n\n## Tools  \n- tavily tool for internet research  \n- Predefined audience profiles (if provided)  \n\n## Examples  \n- **Input:**  \n  - Topic: \"Sustainable Living\"  \n  - Tone: Informative yet approachable  \n  - Target Audience: Young adults interested in eco-friendly lifestyles  \n\n- **Output:**  \n  Table of Contents:  \n  1. \"What is Sustainable Living? A Beginner’s Guide\"  \n  2. \"Top 10 Small Changes for a Big Impact\"  \n  3. \"The Science Behind Sustainability: Why It Matters\"  \n  4. \"Spotlight on Innovations: Green Tech of 2025\"  \n  5. \"Inspiration Corner: Stories of Everyday Eco-Warriors\"  \n\n- **Input:**  \n  - Topic: \"Remote Work Tips\"  \n  - Tone: Professional yet motivational  \n  - Target Audience: Corporate professionals transitioning to remote work  \n\n- **Output:**  \n  Table of Contents:  \n  1. \"Remote Work Revolution: Adapting to the New Norm\"  \n  2. \"Home Office Hacks for Maximum Productivity\"  \n  3. \"Balancing Act: Work-Life Harmony Tips\"  \n  4. \"Top Collaboration Tools Every Remote Team Needs\"  \n  5. \"Success Stories: How Remote Work Changed Lives\"  \n\n## SOP (Standard Operating Procedure)  \n1. Review the provided details about the newsletter's topic, tone, and target audience.  \n2. Use the \"tavily\" tool to search for trending, relevant, and engaging subtopics.  \n3. Brainstorm 4-6 high-level topics that fit within the theme of the newsletter and appeal to the target audience.  \n4. Verify that each section aligns with the tone and goals of the newsletter.  \n5. Finalize the table of contents and, if requested, provide brief descriptions for each section.  \n\n## Final Notes  \n- Keep the topics concise and engaging to maximize interest.  \n- Adapt your tone and choice of topics to suit the specific audience profile.  \n- Always aim for a balance of informative and engaging content to maintain readership.  \n---  \nHere is the current date {{ $now }}"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "0d14a14d-e67c-4ae3-bee8-0d464116366f",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -840,
+        1260
+      ],
+      "parameters": {
+        "width": 460,
+        "height": 440,
+        "content": "## Project Planner Prompt\n\nYour job is to split out the table of contents into an individual item for each section. Output each section separately in a field called \"newsletterSections\". When doing so, keep in mind that the newsletter target audience is {{ $('On form submission').item.json['Target Audience'] }} and the tone of the newsletter should be {{ $('On form submission').item.json.Tone }}\n\nHere is the table of contents: {{ $json.output }}\n\n"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "08fafdac-fdd3-439f-950e-2c4919c66287",
+      "name": "Sticky Note5",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -360,
+        1260
+      ],
+      "parameters": {
+        "width": 660,
+        "height": 1480,
+        "content": "## Research Team Prompt\n\n# Overview  \nYou are an AI agent responsible for delivering only the final content for a newsletter section. Your role is to produce concise, well-researched, and audience-tailored content based solely on the provided inputs, with no prefacing statements or explanations.  \n\n## Context  \n- All necessary details, including the section title, description, target audience, and tone, will be provided.  \n- The goal is to create engaging content that aligns with the audience's expectations and the newsletter's objectives.  \n- Content must be supported by research, with sources clearly cited using hyperlinks.  \n\n## Instructions  \n1. Write the final content without including any introductory or concluding remarks about the writing process.  \n2. Conduct research using the tavily tool to ensure credibility and relevance.  \n3. Use the provided inputs to craft a focused section tailored to the target audience.  \n4. Include citations seamlessly within the content using hyperlinks to the original sources.  \n\n## Tools  \n- tavily (for research and citations). \n\n## Citation Guidelines\n- Use the tavily tool to gather information and cite sources\n- For each major claim or piece of information, include a hyperlinked inline citation\n- Format citations as HTML links with descriptive text:\n  <a href=\"[URL]\">[Source: Publication Name]</a>\n- When directly quoting from a source, use quotation marks and include the citation\n\n## Examples  \n- **Input**:  \n  - Section Title: \"The Psychology of Happy Patients\"  \n  - Description: Discuss strategies dental offices can use to improve patient experiences and satisfaction, such as personalized care and stress-reducing techniques.  \n  - Target Audience: Dentists and dental practice managers.  \n  - Tone: Informative yet approachable.  \n- **Output**:  \n  \"Creating a positive patient experience starts with understanding the key drivers of satisfaction in dental care. Personalized care, such as addressing individual patient concerns and tailoring treatments, can significantly boost trust and comfort [Source](https://example.com/personalized-care). Stress-reducing techniques, like offering noise-canceling headphones or aromatherapy in waiting rooms, have also been shown to alleviate anxiety and improve overall impressions of care [Source](https://example.com/stress-reduction). By focusing on these elements, dental practices can foster happier, more loyal patients.\"  \n\n## SOP (Standard Operating Procedure)  \n1. **Input Analysis**: Understand the section's title, description, target audience, and tone.  \n2. **Research**: Use the tavily tool to gather relevant, credible information.  \n3. **Content Writing**: Craft a section based on the provided inputs, ensuring it is directly usable in the newsletter.  \n4. **Cite Sources**: Integrate hyperlinks to all references within the content.  \n5. **Review and Deliver**: Proofread the content to ensure clarity, accuracy, and alignment with the target audience.  \n\n## Final Notes  \n- The output must start directly with the content, without introductory or transitional phrases.  \n- All sources must be clearly cited and integrated naturally into the text.  \n- Focus on delivering value and ensuring readability for the target audience.  \n---  \n"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "fa260fb5-12d1-4d6b-9b83-741bc919917d",
+      "name": "Sticky Note6",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        320,
+        1260
+      ],
+      "parameters": {
+        "width": 660,
+        "height": 980,
+        "content": "## Editor Prompt\n\n## Overview\nYou are an expert editor specializing in creating and refining content to output a high quality, formatted article. You are given a list of titles and outputs and you will use these to create a newsletter tailored towards the defined target audience. Create a section in the article for each title, with a hyperlinked source in each section based on the content.\n\n## Objective\n1. Create content for each title using the provided content\n2. Each section should contain inline citations *Don't leave any out*\n3. Improve the flow of the newsletter and format it for readability\n\n## Citation Management\n1. Preserve all inline citations\n2. Standardize citation format\n3. Ensure citations don't disrupt the flow of reading\n\n## Source Section\n1. Create ONE \"Sources\" section at the end of the newsletter\n2. Format each source entry consistently: \n   <li><a href=\"[URL]\">[Publication Name] - [Article Title]</a></li>\n3. Include complete URL for each source\n4. Organize all sources alphabetically\n5. Verify all links are functional\n\n## Output Format\nThe newsletter should be structured as HTML that will be sent through email:\n- Do not output a title or an introduction, the output should start with the first article heading\n- Main content with hyperlink citations in each section.\n- Headers for each section of the article\n- Sources section at the end with all links\n\n## Important ##\nOutput 1000 words maximum or else the automation breaks!\n\nToday's date is {{ $now }}"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "1489eb6d-b06d-45c8-8ebd-f691ef1aeada",
+      "name": "Sticky Note7",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1000,
+        1260
+      ],
+      "parameters": {
+        "width": 660,
+        "height": 480,
+        "content": "## Create Title Prompt\n\nCreate a title for the incoming newsletter. The tone of the newsletter is {{ $('On form submission').item.json.Tone }} and the target audience is {{ $('On form submission').item.json['Target Audience'] }}.\n\nHere is the newsletter:\n{{ $json.output }}\n\n# Output format\nOutput the title in plain text, no quotation marks, and capitalize the first letter of each word.\nExample: Is Artificial Intelligence A Friend Or Foe?"
+      },
+      "typeVersion": 1
+    }
+  ],
+  "active": false,
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0c747f56-22b1-4562-9470-8db6c174442e",
+  "connections": {
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Editor": {
+      "main": [
+        [
+          {
+            "node": "Create TItle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tavily": {
+      "main": [
+        [
+          {
+            "node": "response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tavily": {
+      "ai_tool": [
+        [
+          {
+            "node": "Research Team",
+            "type": "ai_tool",
+            "index": 0
+          },
+          {
+            "node": "Newsletter Expert",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Editor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Research Team",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Create TItle": {
+      "main": [
+        [
+          {
+            "node": "Save Newsletter As Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research Team": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Project Planner": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Newsletter Expert": {
+      "main": [
+        [
+          {
+            "node": "Project Planner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Newsletter Expert",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Newsletter Expert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Research Team",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Editor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow Input Trigger": {
+      "main": [
+        [
+          {
+            "node": "Tavily",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

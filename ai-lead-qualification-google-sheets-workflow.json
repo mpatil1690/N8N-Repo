@@ -1,0 +1,274 @@
+{
+  "id": "bCrre5NRtVf3ogYq",
+  "meta": {
+    "instanceId": "da4ab0dfab9545594afdbbd8e2347c29274c36efe4d80cdc8b66410174bf5bec",
+    "templateCredsSetupCompleted": true
+  },
+  "name": "Featured - AI Lead Qualification with Google Sheets",
+  "tags": [],
+  "nodes": [
+    {
+      "id": "36dc5d9b-0b6e-4b2d-b31a-0fb2b26dec32",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1160,
+        0
+      ],
+      "parameters": {
+        "options": {},
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "3f2a8ae9-2cfb-451e-8a15-6ed69c8dfc52",
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              },
+              "leftValue": "={{ $('AI Lead Scorer').item.json.score }}\n",
+              "rightValue": 70
+            }
+          ]
+        }
+      },
+      "typeVersion": 2.2
+    },
+    {
+      "id": "d03180e5-1bff-40b2-ac85-081b14edde20",
+      "name": "Send Email To Prospect",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1480,
+        180
+      ],
+      "webhookId": "a9316535-b01b-4c26-919f-74160099d7a5",
+      "parameters": {
+        "html": "New high-quality lead detected!\n\nCompany: {{ $(\"Lead Capture Webhook\").item.json.company }}\nContact: {{ $(\"Lead Capture Webhook\").item.json.firstName }} {{ $(\"Lead Capture Webhook\").item.json.lastName }}\nEmail: {{ $(\"Lead Capture Webhook\").item.json.email }}\nScore: {{ $(\"AI Lead Scorer\").item.json.qualification.score }}/100\nStatus: {{ $(\"AI Lead Scorer\").item.json.qualification.status }}\n\nReasoning: {{ $(\"AI Lead Scorer\").item.json.qualification.reasoning }}\n\nRecommended Action: Schedule a call within 24 hours.\n",
+        "options": {},
+        "subject": "High-Quality Lead Alert: {{ $(\"Lead Capture Webhook\").item.json.company }}",
+        "toEmail": "salesteam@x.com"
+      },
+      "credentials": {
+        "smtp": {
+          "id": "xxxxxxxxxxxxxxxx",
+          "name": "xxxxx"
+        }
+      },
+      "typeVersion": 2.1
+    },
+    {
+      "id": "ec6a5402-9535-4a90-b1b2-73bcf9508dfb",
+      "name": "AI Lead Scorer",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "chatgpt-4o-latest",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "options": {
+          "temperature": 0.2
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Analyze this lead and provide a qualification score from 1-100 and qualification status. Lead data: {{ JSON.stringify($json) }}. Consider: company size, budget, decision authority, timeline, and product fit. Return JSON with score, status (Hot/Warm/Cold), and reasoning.\n"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "xxxxxxxxxxxxxxxx",
+          "name": "xxxxx"
+        }
+      },
+      "typeVersion": 1.8
+    },
+    {
+      "id": "48f7a9d0-0f56-41b1-9d2a-b7adb0ef590f",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -60,
+        -340
+      ],
+      "parameters": {
+        "width": 220,
+        "height": 700,
+        "content": "### Trigger Workflow On Endpoint Activation\n\nEndpoint will receive leads at ```https://n8n.blaiseai.com/webhook-test/lead-qualification```"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "fa77f192-1ca9-412c-8262-722b18d59f96",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        180,
+        -340
+      ],
+      "parameters": {
+        "width": 340,
+        "height": 700,
+        "content": "### AI Lead Scorer\n\nReturns a lead score with reasoning based on provided lead data\n\n❗**Must be updated**\n\n\n### Prompt\nAnalyze this lead and provide a qualification score from 1-100 and qualification status. Lead data: {{ JSON.stringify($json) }}. Consider: company size, budget, decision authority, timeline, and product fit. Return JSON with score, status (Hot/Warm/Cold), and reasoning.\n\n"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "1cfc9476-5a41-4b6d-98f1-783bbd1bdaac",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        540,
+        -340
+      ],
+      "parameters": {
+        "width": 560,
+        "height": 700,
+        "content": "### Update Sheet\n\nCreates a deal with lead data\n\n❗**Must be updated**\n- Google Sheets account credentials\n- And update this node with the following row values once a sheet is connected\n\nCompany: ={{ $(\"Lead Capture Webhook\").item.json.company }}\n\nContact Name: ={{ $(\"Lead Capture Webhook\").item.json.firstName }} {{ $(\"Lead Capture Webhook\").item.json.lastName }}\n\nEmail: ={{ $(\"Lead Capture Webhook\").item.json.email }}\n\nPhone: ={{ $(\"Lead Capture Webhook\").item.json.phone }}\n\nScore: ={{ $json.qualification.score }}\n\nStatus: ={{ $json.qualification.status }}\n\nReasoning: ={{ $json.qualification.reasoning }}\n\nDate: ={{ $now.toFormat(\"yyyy-MM-dd HH:mm\") }}\n\nSource: ={{ $(\"Lead Capture Webhook\").item.json.source }}\n\nNext Action: ={{ $json.qualification.score >= 70 ? \"Schedule Call\" : \"Send Email Sequence\" }}"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "b40dda04-e583-46f6-ab59-e09343b4759a",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1120,
+        -340
+      ],
+      "parameters": {
+        "width": 200,
+        "height": 700,
+        "content": "### If Router\n\n\"True\" based on a lead score of 70\n"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "fdc7c3ba-a82e-48a4-96ce-5fefc1cbd73b",
+      "name": "Sticky Note6",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1360,
+        -340
+      ],
+      "parameters": {
+        "width": 600,
+        "height": 700,
+        "content": "### Alert Sales Team\n\n\n❗**Must be updated**\nAdd \"From\" email & credentials\n\n**Email Subject**\nHigh-Quality Lead Alert: {{ $(\"Lead Capture Webhook\").item.json.company }}\n\n\n**Email Body**\nNew high-quality lead detected!\n\nCompany: {{ $(\"Lead Capture Webhook\").item.json.company }}\nContact: {{ $(\"Lead Capture Webhook\").item.json.firstName }} {{ $(\"Lead Capture Webhook\").item.json.lastName }}\nEmail: {{ $(\"Lead Capture Webhook\").item.json.email }}\nScore: {{ $(\"AI Lead Scorer\").item.json.qualification.score }}/100\nStatus: {{ $(\"AI Lead Scorer\").item.json.qualification.status }}\n\nReasoning: {{ $(\"AI Lead Scorer\").item.json.qualification.reasoning }}\n\nRecommended Action: Schedule a call within 24 hours.\n\n\n"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "39110391-f80e-40b6-b1a6-1c147373d73a",
+      "name": "Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        980,
+        0
+      ],
+      "parameters": {
+        "operation": "append",
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "xxxxxxxxxxxxxxxx",
+          "name": "xxxxx"
+        }
+      },
+      "typeVersion": 4.6
+    },
+    {
+      "id": "a8d504fc-5599-4a7d-aea8-7e23cd69dd00",
+      "name": "Lead Capture Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "b064d693-3375-48f3-a51f-34f527b50775",
+      "parameters": {
+        "path": "lead-qualification",
+        "options": {},
+        "httpMethod": "POST"
+      },
+      "typeVersion": 2
+    }
+  ],
+  "active": false,
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d0931984-79a1-42e5-a598-9725f9a3b4d5",
+  "connections": {
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send Email To Prospect",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Lead Scorer": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Capture Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Lead Scorer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

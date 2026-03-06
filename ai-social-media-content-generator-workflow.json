@@ -1,0 +1,293 @@
+{
+  "meta": {
+    "instanceId": "da4ab0dfab9545594afdbbd8e2347c29274c36efe4d80cdc8b66410174bf5bec",
+    "templateCredsSetupCompleted": true
+  },
+  "name": "AI Social Media Content Generator",
+  "nodes": [
+    {
+      "id": "4abd3f9d-1a5e-4e75-a2c8-47ee12ed5df9",
+      "name": "Generate Social Content",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "chatgpt-4o-latest",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "options": {
+          "maxTokens": 500,
+          "temperature": 0.8
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Generate 3 engaging social media posts for a B2B software company. Include relevant hashtags and call-to-actions. Make them professional yet engaging. Topics: productivity, automation, business growth. Return as JSON array with fields: content, hashtags, platform (twitter/linkedin/facebook)."
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "xxxxxxxxxxxxxxxx",
+          "name": "xxxxx"
+        }
+      },
+      "typeVersion": 1.8
+    },
+    {
+      "id": "76278654-c39f-4b0f-b305-130e138ec149",
+      "name": "Content Scheduler",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0 9"
+            },
+            {
+              "field": "cronExpression",
+              "expression": "0 0 13"
+            },
+            {
+              "field": "cronExpression",
+              "expression": "0 0 17"
+            }
+          ]
+        }
+      },
+      "typeVersion": 1.2
+    },
+    {
+      "id": "8e679eae-103c-40e3-be28-4cef7d72f9d0",
+      "name": "Split Out",
+      "type": "n8n-nodes-base.splitOut",
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "options": {},
+        "fieldToSplitOut": "={{ $('Generate Social Content').parse($json.choices[0].message.content) }}"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "6e5362e6-b09d-47ba-b1ea-67f63074d79d",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        840,
+        0
+      ],
+      "parameters": {
+        "options": {},
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "4a773bad-44e2-4307-b3eb-3f8c55f3aa74",
+              "operator": {
+                "name": "filter.operator.equals",
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.platform }}",
+              "rightValue": "twitter"
+            }
+          ]
+        }
+      },
+      "typeVersion": 2.2
+    },
+    {
+      "id": "4af59a11-1836-4977-bb55-1a4689e117b8",
+      "name": "X",
+      "type": "n8n-nodes-base.twitter",
+      "position": [
+        1080,
+        -160
+      ],
+      "parameters": {
+        "text": "={{ $json.content }} {{ $json.hashtags }}",
+        "additionalFields": {}
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "f7a68cbc-f057-4d22-a7fe-042da72ca57c",
+      "name": "LinkedIn",
+      "type": "n8n-nodes-base.linkedIn",
+      "position": [
+        1080,
+        180
+      ],
+      "parameters": {
+        "text": "={{ $json.content }} {{ $json.hashtags }}",
+        "additionalFields": {},
+        "shareMediaCategory": "ARTICLE"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "a52e584c-a78a-4f77-b2d6-9f55e5fcda75",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -60,
+        -360
+      ],
+      "parameters": {
+        "width": 220,
+        "height": 620,
+        "content": "### CRON Scheduler\n\nTriggered daily at 9am, 1pm, 5pm"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "28ac96f2-519b-49c3-a959-106bba77696e",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        180,
+        -360
+      ],
+      "parameters": {
+        "width": 340,
+        "height": 620,
+        "content": "### Generate Social Content\n\n❗**Must be updated**\n- OpenAI credentials\n- Can be updated to incorporate additional data sources + focus on more personally relevant topics\n\n### Prompt\nGenerate 3 engaging social media posts for a B2B software company. Include relevant hashtags and call-to-actions. Make them professional yet engaging. Topics: productivity, automation, business growth. Return as JSON array with fields: content, hashtags, platform (twitter/linkedin/facebook)."
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "48813c65-0509-4397-bfc2-1e60288559ad",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        540,
+        -360
+      ],
+      "parameters": {
+        "width": 220,
+        "height": 620,
+        "content": "### Split Out\n\nSplit JSON based on the content platform"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "5204bb14-e5f1-4ff5-9261-24b7364be961",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        780,
+        -360
+      ],
+      "parameters": {
+        "width": 220,
+        "height": 620,
+        "content": "### Split Out\n\nTwitter\nor\nLinkedIn\n\nBased on the JSON returned from the previous step"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "8812e1ea-86c1-4835-91e0-d19f8e4a1f62",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1020,
+        -360
+      ],
+      "parameters": {
+        "width": 220,
+        "height": 320,
+        "content": "### Post to Twitter\n\n❗**Must be updated**\n- Twitter credentials"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "b545b414-98cf-419c-becb-dabc34175d27",
+      "name": "Sticky Note5",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1020,
+        -20
+      ],
+      "parameters": {
+        "width": 220,
+        "height": 320,
+        "content": "### Post to Twitter\n\n❗**Must be updated**\n- LinkedIn credentials"
+      },
+      "typeVersion": 1
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "If": {
+      "main": [
+        [
+          {
+            "node": "X",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "LinkedIn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Content Scheduler": {
+      "main": [
+        [
+          {
+            "node": "Generate Social Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Social Content": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

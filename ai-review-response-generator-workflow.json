@@ -1,0 +1,233 @@
+{
+  "id": "mLyw7tquINSAjfQ7",
+  "meta": {
+    "instanceId": "da4ab0dfab9545594afdbbd8e2347c29274c36efe4d80cdc8b66410174bf5bec"
+  },
+  "name": "Features - AI Review Response Generator",
+  "tags": [],
+  "nodes": [
+    {
+      "id": "c1feb83a-a6a8-494d-8a29-2cca0f24e9c6",
+      "name": "Main Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        -20,
+        0
+      ],
+      "webhookId": "ai-review-response-generator-trigger-id",
+      "parameters": {
+        "path": "ai-review-response-generator-trigger",
+        "options": {},
+        "httpMethod": "POST"
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "9e9e9a80-0d62-45d6-b111-dc8e351aa019",
+      "name": "AI Analyzer",
+      "type": "n8n-nodes-base.openAi",
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "prompt": "Analyze and process this marketing data with advanced AI: {{ JSON.stringify($json) }}. Provide intelligent insights, predictions, and actionable recommendations.",
+        "options": {
+          "maxTokens": 800,
+          "temperature": 0.3
+        },
+        "requestOptions": {}
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "RL2T9qzlXCBXalW4",
+          "name": "OpenAi account"
+        }
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "320e8b11-a98a-477d-82da-aa25cef25c2f",
+      "name": "Parse AI Insights",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        500,
+        0
+      ],
+      "parameters": {
+        "options": {}
+      },
+      "typeVersion": 3
+    },
+    {
+      "id": "01b14ae9-7d45-48db-981b-c9aa569036ab",
+      "name": "Store Insights",
+      "type": "n8n-nodes-base.airtable",
+      "position": [
+        780,
+        0
+      ],
+      "parameters": {
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "options": {},
+        "operation": "create"
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "d1891c89-0a17-433e-ada1-0cb72dab80e5",
+      "name": "Notify Team",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [
+        1020,
+        0
+      ],
+      "webhookId": "9ee05086-265b-4d10-b9da-c8022a5cc8fd",
+      "parameters": {
+        "text": "New AI insights from AI Review Response Generator:\n\n{{ JSON.stringify($(\"Parse AI Insights\").item.json.aiInsights, null, 2) }}",
+        "options": {},
+        "subject": "AI Insights: {{ $(\"Parse AI Insights\").item.json.aiInsights.title || \"AI Review Response Generator\" }}",
+        "toEmail": "team@company.com",
+        "fromEmail": "marketing@company.com"
+      },
+      "credentials": {
+        "smtp": {
+          "id": "uSsvXNMhZIEvThy5",
+          "name": "SMTP for ai-clients.com"
+        }
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "7e81a890-2ec2-4b85-877f-48f9fe054cd8",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -80,
+        -420
+      ],
+      "parameters": {
+        "height": 720,
+        "content": "### Main trigger\n\n❗**Must be updated.**\n\nReplace this with a client communication platform of choice + business logic\n\nReviews can mean public reviews or private communications\n\nEx: Slack, Google Reviews, G2, etc.\n"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "186586c1-0b35-44cf-bf2c-9ef620144248",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        180,
+        -420
+      ],
+      "parameters": {
+        "height": 720,
+        "content": "### AI Analysis & Recommendations\n\nWe use OpenAI's O3 to analyze the information provided to recommend action steps.\n\n❗Update per client to better attune the AI for recommendations."
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "612d698c-280a-403c-b54e-ecc67e8eed7a",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        440,
+        -420
+      ],
+      "parameters": {
+        "height": 720,
+        "content": "### Parse AI insights into action steps\n\n❗**Must be updated**\n\nThis step parses the returned AI insights into individual items to be saved in your CRM or task management solution.\n\n"
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "5d399e0f-56b9-4355-94fb-316bdd7fcc53",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        700,
+        -420
+      ],
+      "parameters": {
+        "height": 720,
+        "content": "### Add parsed AI insights to your CRM\n\n❗**Must be updated**\n\nThis step saves the parsed insights into your CRM or task management solution of choice.\n\nUpdate this towards the desired source - consider assigning tasks to the client record & to the best person to take the recommended actions."
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "c5a9fb9c-ba2f-451c-b65d-d33d4f0d6cf6",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        960,
+        -420
+      ],
+      "parameters": {
+        "height": 720,
+        "content": "### Send email to team with insights\n"
+      },
+      "typeVersion": 1
+    }
+  ],
+  "active": false,
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6859ac61-cebf-4791-b855-70435941d23a",
+  "connections": {
+    "AI Analyzer": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Insights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Main Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Analyzer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Insights": {
+      "main": [
+        [
+          {
+            "node": "Notify Team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Insights": {
+      "main": [
+        [
+          {
+            "node": "Store Insights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
